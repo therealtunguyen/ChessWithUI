@@ -1,8 +1,7 @@
 from pieces import *
 from board import Board
-import time
 
-def validate_piece(current_player: Color) -> tuple[Piece, str]:
+def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str]:
     """Validating the chosen square"""
     chosen_square: str = input("Choose a square to move: ")
     piece: Piece = board.get_piece(chosen_square)
@@ -27,35 +26,37 @@ def have_winner(board: Board) -> bool:
         return True
     return False
 
-def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> None:
+def update_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> None:
+    """Check if there the piece moves to its color, update the board if it doesn't"""
+    if board.match_color(target_square, piece.color):
+        print("You cannot move to your own piece")
+    else:
+        board.update(chosen_square, target_square)
+        piece.pos = target_square
+
+def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> bool:
     """
     - Moving the piece
     - Note that updating the board does not affect the pos attribute of the piece
+    - Return True if moving the piece is successful
     """
-    # Check if the piece is a pawn because it has special rules like en passant
-    if isinstance(piece, Pawn):
-        if board.pawn_can_move(chosen_square, target_square, piece.color):
-            if board.match_color(target_square, piece.color):
-                print("You cannot move to your own piece")
-            else:
-                board.update(chosen_square, target_square, is_pawn=True)
-                piece.pos = target_square
-    # Check if the piece is a king because it has special rules like castling
-    elif isinstance(piece, King):
-        if board.king_can_move(chosen_square, target_square, piece.color):
-            if board.match_color(target_square, piece.color):
-                print("You cannot move to your own piece")
-            else:
-                board.update(chosen_square, target_square)
-                piece.pos = target_square
-    elif piece.can_move(target_square):
-        if board.match_color(target_square, piece.color):
-            print("You cannot move to your own piece")
+    if piece.can_move(target_square):
+        # Check if the piece is a pawn because it has special rules like en passant
+        if isinstance(piece, Pawn):
+            if board.pawn_can_move(chosen_square, target_square, piece.color):
+                update_board(board, piece, chosen_square, target_square)
+                return True
+        # Check if the piece is a king because it has special rules like castling
+        elif isinstance(piece, King):
+            if board.king_can_move(chosen_square, target_square, piece.color):
+                update_board(board, piece, chosen_square, target_square)
+                return True
         else:
-            board.update(chosen_square, target_square)
-            piece.pos = target_square
+            update_board(board, piece, chosen_square, target_square)
+            return True
     else:
         print("Invalid move")
+        return False
 
 board = Board()
 current_player: Color = Color.WHITE
@@ -67,16 +68,13 @@ while True:
     # Get player inputs
     piece: Piece
     chosen_square: str
-    piece, chosen_square = validate_piece(current_player)
+    piece, chosen_square = validate_piece(current_player, board)
     target_square: str = input(f"Where would you like to move from {chosen_square} to: ")
 
-    # Some decoration
-    time.sleep(0.25)
-    print(f"Moving from {chosen_square} to {target_square}...\n")
-
     # Move the piece
-    move(chosen_square, target_square, piece, board)
-
-    # Change the current player's color
-    current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
-    time.sleep(0.5)
+    if move(chosen_square, target_square, piece, board):
+        print(f"Moving from {chosen_square} to {target_square}...\n")
+        # Change the current player's color
+        current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
+    else:
+        print("Invalid move\n")
