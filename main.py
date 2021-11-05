@@ -42,7 +42,6 @@ def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> N
                 piece.pos = target_square
     # Check if the piece is a king because it has special rules like castling
     elif isinstance(piece, King):
-        print("Is King")
         if board.king_can_move(chosen_square, target_square, piece.color):
             if board.match_color(target_square, piece.color):
                 print("You cannot move to your own piece")
