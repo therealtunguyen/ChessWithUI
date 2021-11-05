@@ -86,68 +86,67 @@ class Board:
             return False
         return piece.color == color
 
-    def pawn_can_move(self, pos: str, target: str, color: Color) -> Union[bool, str]:
+    def en_pas(self, pos: str, target: str, color: Color) -> Union[str, bool]:
         """
         - This can only be called if the piece at pos is a pawn.
         - Return the square that is captured by the pawn if it moves diagonally
-        - Return the target square if the pawn moves forward
-        - Return False if the pawn cannot move
+        - Return the target square if the pawn move forward
+        - Return False if the pawn can't move diagonally.
         """
         pawn: Pawn = self.get_piece(pos)
         if pawn.move_diagonal(target, color):
             if color == Color.WHITE:
                 if self.get_piece(target) is not None:  # Pawn can only capture if there is a piece there
                     return target
+                # Check the en passant case
+                elif int(target[1]) - 1 == 5:  # Which is the only way to en passant
+                    en_passant = target[0] + str(int(target[1]) - 1)
+                    if self.get_piece(en_passant) is not None:
+                        return en_passant
                 else:
-                    # Check the en passant case
-                    if int(target[1]) - 1 == 5:  # Which is the only way to en passant
-                        en_passant = target[0] + str(int(target[1]) - 1)
-                        if self.get_piece(en_passant) is not None:
-                            return en_passant
+                    return False
             else:
                 if self.get_piece(target) is not None:
                     return target
+                elif int(target[1]) + 1 == 4:
+                    en_passant = target[0] + str(int(target[1]) + 1)
+                    if self.get_piece(en_passant) is not None:
+                        return en_passant
                 else:
-                    if int(target[1]) + 1 == 4:
-                        en_passant = target[0] + str(int(target[1]) + 1)
-                        if self.get_piece(en_passant) is not None:
-                            return en_passant
-            return False
-        elif pawn.can_move(target):
-            return target
-        return False
+                    return False
+        return target
 
-    def king_can_move(self, pos: str, target: str, color: Color) -> bool:
+    def castle(self, pos: str, target: str, color: Color) -> bool:
         """
         - This can only be called if the piece at pos is a king.
-        - Returns the target square if the king at pos can move that target, including castling.
-        - If it can't move return False.
+        - If the king castles, update the rook position and return True.
+        - If it can't castle return False.
         """
         king: King = self.get_piece(pos)
-        if king.can_move(target):
-            if king.castle(target):
-                rook_pos = 'a' if target[0] == 'c' else 'h'
-                rook_target = 'd' if target[0] == 'c' else 'f'
-                if color == Color.WHITE:
-                    rook_pos += '1'
-                    rook_target += '1'
-                else:
-                    rook_pos += '8'
-                    rook_target += '8'
-                
-                rook: Rook = self.get_piece(rook_pos)
-                if not king.has_castled and not rook.has_castled:
-                    # Update the rook position
-                    self.update(rook_pos, rook_target)
-                    return True
+        if king.castle(target):
+            rook_pos = 'a' if target[0] == 'c' else 'h'
+            rook_target = 'd' if target[0] == 'c' else 'f'
+            if color == Color.WHITE:
+                rook_pos += '1'
+                rook_target += '1'
             else:
+                rook_pos += '8'
+                rook_target += '8'
+            
+            rook: Rook = self.get_piece(rook_pos)
+            if not king.has_castled and not rook.has_castled:
+                # Update the rook position
+                self.update(rook_pos, rook_target)
+                rook.pos = rook_target
                 return True
-        return False
+            else:
+                return False
+        return True
 
     def update(self, pos: str, target: str, is_pawn: bool = False) -> None:
         """Update chess board by moving the piece to the target position."""
         if is_pawn:
-            captured_square = self.pawn_can_move(pos, target, self.get_piece(pos).color)
+            captured_square = self.en_pas(pos, target, self.get_piece(pos).color)
             captured_row, captured_col = self.__get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
         

@@ -43,12 +43,12 @@ def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> b
     if piece.can_move(target_square):
         # Check if the piece is a pawn because it has special rules like en passant
         if isinstance(piece, Pawn):
-            if board.pawn_can_move(chosen_square, target_square, piece.color):
+            if board.en_pas(chosen_square, target_square, piece.color):
                 update_board(board, piece, chosen_square, target_square)
                 return True
         # Check if the piece is a king because it has special rules like castling
         elif isinstance(piece, King):
-            if board.king_can_move(chosen_square, target_square, piece.color):
+            if board.castle(chosen_square, target_square, piece.color):
                 update_board(board, piece, chosen_square, target_square)
                 return True
         else:
