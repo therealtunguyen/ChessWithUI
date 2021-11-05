@@ -10,9 +10,6 @@ class Board:
     def __init__(self):
         """
         Initializes a board with a set of squares.
-        The attributes of a chess piece are pos and color.
-        pos: str
-        color: Color
         """
         self.squares = [[None for _ in range(8)] for _ in range(8)]
 
