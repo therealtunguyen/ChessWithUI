@@ -139,6 +139,16 @@ class Pawn(Piece):
                     return True
         return False
 
+    def promote(self, pos: str) -> bool:
+        """Return True if the pawn is able to promote"""
+        if self.color == Color.WHITE:
+            if pos[1] == '8':
+                return True
+        else:
+            if pos[1] == '1':
+                return True
+        return False
+
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
         if self.is_valid_move(target):
