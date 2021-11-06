@@ -26,13 +26,17 @@ def have_winner(board: Board) -> bool:
         return True
     return False
 
-def update_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> None:
-    """Check if there the piece moves to its color, update the board if it doesn't"""
+def update_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
+    """
+    - Check if there the piece moves to its color, update the board if it doesn't
+    - Return False if the piece moves to its color
+    """
     if board.match_color(target_square, piece.color):
-        print("You cannot move to your own piece")
+        return False
     else:
         board.update(chosen_square, target_square)
         piece.pos = target_square
+        return True
 
 def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> bool:
     """
@@ -44,18 +48,15 @@ def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> b
         # Check if the piece is a pawn because it has special rules like en passant
         if isinstance(piece, Pawn):
             if board.en_pas(chosen_square, target_square, piece.color):
-                update_board(board, piece, chosen_square, target_square)
-                return True
+                return update_board(board, piece, chosen_square, target_square)
         # Check if the piece is a king because it has special rules like castling
         elif isinstance(piece, King):
             if board.castle(chosen_square, target_square, piece.color):
-                update_board(board, piece, chosen_square, target_square)
-                return True
+                return update_board(board, piece, chosen_square, target_square)
         else:
-            update_board(board, piece, chosen_square, target_square)
-            return True
+            return update_board(board, piece, chosen_square, target_square)
     else:
-        print("Invalid move")
+        print("Invalid move\n")
         return False
 
 
