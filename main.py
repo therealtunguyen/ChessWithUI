@@ -27,7 +27,7 @@ def have_winner(board: Board) -> bool:
         return True
     return False
 
-def moving_piece(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
+def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
     """
     - Check if there the piece moves to its color, update the board if it doesn't
     - Return False if the piece moves to its color
@@ -49,13 +49,13 @@ def able_to_move_on_board(chosen_square: str, target_square: str,piece: Piece, b
         # Check if the piece is a pawn because it has special rules called en passant
         if isinstance(piece, Pawn):
             if board.en_pas(chosen_square, target_square, piece.color):
-                return moving_piece(board, piece, chosen_square, target_square)
+                return move_piece_on_board(board, piece, chosen_square, target_square)
         # Check if the piece is a king because it has special rules called castling
         elif isinstance(piece, King):
             if board.castle(chosen_square, target_square, piece.color):
-                return moving_piece(board, piece, chosen_square, target_square)
+                return move_piece_on_board(board, piece, chosen_square, target_square)
         else:
-            return moving_piece(board, piece, chosen_square, target_square)
+            return move_piece_on_board(board, piece, chosen_square, target_square)
     else:
         print("Invalid move\n")
         return False
