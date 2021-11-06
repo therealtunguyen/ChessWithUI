@@ -27,7 +27,7 @@ def have_winner(board: Board) -> bool:
         return True
     return False
 
-def update_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
+def moving_piece(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
     """
     - Check if there the piece moves to its color, update the board if it doesn't
     - Return False if the piece moves to its color
@@ -39,23 +39,23 @@ def update_board(board: Board, piece: Piece, chosen_square: str, target_square: 
         piece.pos = target_square
         return True
 
-def move(chosen_square: str, target_square: str,piece: Piece, board: Board) -> bool:
+def able_to_move_on_board(chosen_square: str, target_square: str,piece: Piece, board: Board) -> bool:
     """
     - Moving the piece
     - Return True if moving the piece is successful
     """
     # Note that updating the board does not affect the pos attribute of the piece
     if piece.can_move(target_square):
-        # Check if the piece is a pawn because it has special rules like en passant
+        # Check if the piece is a pawn because it has special rules called en passant
         if isinstance(piece, Pawn):
             if board.en_pas(chosen_square, target_square, piece.color):
-                return update_board(board, piece, chosen_square, target_square)
-        # Check if the piece is a king because it has special rules like castling
+                return moving_piece(board, piece, chosen_square, target_square)
+        # Check if the piece is a king because it has special rules called castling
         elif isinstance(piece, King):
             if board.castle(chosen_square, target_square, piece.color):
-                return update_board(board, piece, chosen_square, target_square)
+                return moving_piece(board, piece, chosen_square, target_square)
         else:
-            return update_board(board, piece, chosen_square, target_square)
+            return moving_piece(board, piece, chosen_square, target_square)
     else:
         print("Invalid move\n")
         return False
@@ -76,7 +76,7 @@ def main() -> None:
         target_square: str = input(f"Where would you like to move from {chosen_square} to: ")
 
         # Move the piece
-        if move(chosen_square, target_square, piece, board):
+        if able_to_move_on_board(chosen_square, target_square, piece, board):
             print(f"Moving from {chosen_square} to {target_square}...\n")
             # Change the current player's color
             current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE

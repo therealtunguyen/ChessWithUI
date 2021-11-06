@@ -37,9 +37,7 @@ class Board:
             self.squares[6][i] = Pawn(chr(ord("a") + i) + '2', Color.WHITE)
 
     def __repr__(self):
-        """
-        Displays the board.
-        """
+        """Displays the board."""
         board = "=" * 25 + "\n"
         for row in range(8):
             board += f"{8 - row} "
@@ -54,30 +52,22 @@ class Board:
         return board
 
     def get_row_col(self, pos: str) -> tuple[int]:
-        """
-        Returns the row and column of the given position.
-        """
+        """Returns the row and column of the given position."""
         col = ord(pos[0]) - ord("a")
         row = 8 - int(pos[1])
         return row, col
 
     def get_square_name(self, row: int, col: int) -> str:
-        """
-        Returns the name of the square at the given row and column.
-        """
+        """Returns the name of the square at the given row and column."""
         return chr(ord("a") + col) + str(8 - row)
 
     def get_piece(self, pos: str) -> Union[Piece, None]:
-        """
-        Returns the piece at the given position.
-        """
+        """Returns the piece at the given position."""
         row, col = self.get_row_col(pos)
         return self.squares[row][col]
 
     def match_color(self, target: str, color: Color) -> bool:
-        """
-        Returns True if the piece at the given position is of the given color.
-        """
+        """Returns True if the piece at the given position is of the given color."""
         piece = self.get_piece(target)
         if piece is None:
             return False
@@ -97,20 +87,22 @@ class Board:
                     return target
                 # Check the en passant case
                 elif int(target[1]) - 1 == 5:  # Which is the only way to en passant
-                    en_passant = target[0] + str(int(target[1]) - 1)
-                    if self.get_piece(en_passant) is not None:
-                        return en_passant
-                else:
-                    return False
+                    en_passant: str = target[0] + str(int(target[1]) - 1)
+                    en_passant_square: Union[Pawn, None] = self.get_piece(en_passant)
+                    if en_passant_square is not None and isinstance(en_passant_square, Pawn):
+                        if en_passant_square.jump:
+                            return en_passant
+                return False
             else:
                 if self.get_piece(target) is not None:
                     return target
                 elif int(target[1]) + 1 == 4:
-                    en_passant = target[0] + str(int(target[1]) + 1)
-                    if self.get_piece(en_passant) is not None:
-                        return en_passant
-                else:
-                    return False
+                    en_passant: str = target[0] + str(int(target[1]) + 1)
+                    en_passant_square: Union[Pawn, None] = self.get_piece(en_passant)
+                    if en_passant_square is not None and isinstance(en_passant_square, Pawn):
+                        if en_passant_square.jump:
+                            return en_passant
+                return False
         return target
 
     def castle(self, pos: str, target: str, color: Color) -> bool:
@@ -138,8 +130,7 @@ class Board:
                 self.update(rook_pos, rook_target)
                 rook.pos = rook_target
                 return True
-            else:
-                return False
+            return False
         return True
 
     def update(self, pos: str, target: str, is_pawn: bool = False) -> None:
