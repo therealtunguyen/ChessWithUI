@@ -66,12 +66,12 @@ class Board:
         row, col = self.get_row_col(pos)
         return self.squares[row][col]
 
-    def match_color(self, target: str, color: Color) -> bool:
+    def match_color(self, target: str, current_color: Color) -> bool:
         """Returns True if the piece at the given position is of the given color."""
         piece = self.get_piece(target)
         if piece is None:
             return False
-        return piece.color == color
+        return piece.color == current_color
 
     def en_pas(self, pos: str, target: str, color: Color) -> Union[str, bool]:
         """
@@ -103,6 +103,9 @@ class Board:
                         if en_passant_square.jump:
                             return en_passant
                 return False
+        target_piece: Piece = self.get_piece(target)
+        if target_piece is not None:  # Pawn can't move forward
+            return False
         return target
 
     def castle(self, pos: str, target: str, color: Color) -> bool:
@@ -129,9 +132,79 @@ class Board:
                 # Update the rook position
                 self.update(rook_pos, rook_target)
                 rook.pos = rook_target
+                rook.has_castled = True
+                king.has_castled = True
                 return True
             return False
+        king.has_castled = True
         return True
+
+    def keep_checking(self, color: Color, index: tuple[int], direction: tuple[int]) -> list[str]:
+        """Keep checking valid squares"""
+        original_pos: str = self.get_square_name(*index)
+        row_target: int
+        col_target: int
+        row_target, col_target = index
+        valid_squares: list = []
+        has_eaten: bool = False
+        while not has_eaten:
+            row_target += direction[0]
+            col_target += direction[1]
+            if row_target < 0 or row_target > 7 or col_target < 0 or col_target > 7:
+                break
+            else:
+                target: str = self.get_square_name(row_target, col_target)
+                target_piece: Union[Piece, None] = self.get_piece(target)
+                if not self.get_piece(original_pos).can_move(target):
+                    break
+                elif target_piece is not None:
+                    if self.match_color(target, color):
+                        break
+                    elif not self.match_color(target, color):
+                        has_eaten = True
+                valid_squares.append(target)
+        return valid_squares
+
+    def get_valid_moves_for_knights(self, pos: str) -> list[str]:
+        """Returns a list of valid squares for the knight at the given position."""
+        # Loop through all the squares and append to the list if it is valid
+        valid_squares: list = []
+        knight: Knight = self.get_piece(pos)
+        for i in range(8):
+            for j in range(8):
+                target: str = self.get_square_name(i, j)
+                if knight.can_move(target) and not self.match_color(target, knight.color):
+                    valid_squares.append(target)
+        return valid_squares
+
+    def get_valid_moves(self, pos: str) -> list[str]:
+        """
+        - Check and return the valid piece's available squares
+        - Only use for piece that isn't a knight
+        """
+        orders: list[list[int]] = [
+            [-1, 0], [-1, 1], [0, 1], [1, 1],
+            [1, 0], [1, -1], [0, -1], [-1, -1]
+        ]
+        row: int
+        col: int
+        row, col = self.get_row_col(pos)
+        piece: Piece = self.squares[row][col]
+        available_squares: list = []
+        
+        for order in orders:
+            row_order = row + order[0]
+            col_order = col + order[1]
+            if row_order < 0 or row_order > 7 or col_order < 0 or col_order > 7:
+                continue
+            target: str = self.get_square_name(row_order, col_order)
+            if piece.can_move(target):
+                if isinstance(piece, Pawn):  # Check for en passant case
+                    if self.en_pas(pos, target, piece.color) is not False:
+                        available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
+                else:
+                    available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
+        return available_squares
 
     def update(self, pos: str, target: str, is_pawn: bool = False) -> None:
         """Update chess board by moving the piece to the target position."""
