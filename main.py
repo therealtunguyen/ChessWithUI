@@ -1,10 +1,11 @@
 from pieces import *
 from board import Board
+from typing import Union
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str]:
     """Validating the chosen square"""
     chosen_square: str = input("Choose a square to move: ")
-    piece: Piece = board.get_piece(chosen_square)
+    piece: Union[Piece, None] = board.get_piece(chosen_square)
     
     # Make a while loop until the piece is valid
     while piece is None or piece.color != current_player:

@@ -130,8 +130,10 @@ class Board:
                 rook_pos += '8'
                 rook_target += '8'
             
-            rook: Rook = self.get_piece(rook_pos)
-            if not king.has_castled and not rook.has_castled:
+            rook: Union[Rook, None] = self.get_piece(rook_pos)
+            if rook is None:
+                return False
+            elif not king.has_castled and not rook.has_castled:
                 # Update the rook position
                 self.update(rook_pos, rook_target)
                 rook.pos = rook_target
