@@ -19,7 +19,7 @@ class Piece(ABC):
     def __repr__(self) -> str:
         return f"Piece: {self.symbol} {self.color}"
 
-    def is_valid_square(self, target: str) -> bool:
+    def square_in_board(self, target: str) -> bool:
         """Check if the target square is on the board or not"""
         letter, number = target[0], target[1]
         if letter.isalpha() and number.isnumeric():
@@ -30,8 +30,8 @@ class Piece(ABC):
     @abstractmethod
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        
 
+    
 class Rook(Piece):
     """Rook class"""
     has_castled = False
@@ -42,9 +42,8 @@ class Rook(Piece):
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if target[0] == self.pos[0] or target[1] == self.pos[1]:
-                self.has_castled = True  # Can't castle after the first move
                 return True
         return False
 
@@ -57,11 +56,10 @@ class Bishop(Piece):
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if abs(ord(target[0]) - ord(self.pos[0])) == abs(int(target[1]) - int(self.pos[1])):
                 return True
         return False
-
 
 class Queen(Piece):
     """Queen class"""
@@ -71,7 +69,7 @@ class Queen(Piece):
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if target[0] == self.pos[0] or target[1] == self.pos[1]:
                 return True
             elif abs(ord(target[0]) - ord(self.pos[0])) == abs(int(target[1]) - int(self.pos[1])):
@@ -89,18 +87,17 @@ class King(Piece):
 
     def castle(self, target: str) -> bool:
         """Return True if the king wants to castle and do not care whether it is a valid move"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if target[1] == self.pos[1] and abs(ord(target[0]) - ord(self.pos[0])) == 2:
                 return True
         return False
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if abs(ord(target[0]) - ord(self.pos[0])) <= 1 and abs(int(target[1]) - int(self.pos[1])) <= 1:
-                self.has_castled = True  # Can't castle after the first move
                 return True
-            elif target[1] == self.pos[1] and abs(ord(target[0]) - ord(self.pos[0])) == 2:
+            elif target[1] == self.pos[1] and abs(ord(target[0]) - ord(self.pos[0])) == 2 and not self.has_castled:
                 return True
         return False
 
@@ -113,7 +110,7 @@ class Knight(Piece):
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if abs(ord(target[0]) - ord(self.pos[0])) == 2 and abs(int(target[1]) - int(self.pos[1])) == 1:
                 return True
             elif abs(ord(target[0]) - ord(self.pos[0])) == 1 and abs(int(target[1]) - int(self.pos[1])) == 2:
@@ -153,7 +150,7 @@ class Pawn(Piece):
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
-        if self.is_valid_square(target):
+        if self.square_in_board(target):
             if self.color == Color.WHITE:
                 if target[0] == self.pos[0]:
                     if int(target[1]) - int(self.pos[1]) == 1:
