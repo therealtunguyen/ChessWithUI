@@ -53,7 +53,7 @@ class Board:
         board += "  a  b  c  d  e  f  g  h" + "\n" + "=" * 25
         return board
 
-    def __get_row_col(self, pos: str) -> tuple[int]:
+    def get_row_col(self, pos: str) -> tuple[int]:
         """
         Returns the row and column of the given position.
         """
@@ -71,7 +71,7 @@ class Board:
         """
         Returns the piece at the given position.
         """
-        row, col = self.__get_row_col(pos)
+        row, col = self.get_row_col(pos)
         return self.squares[row][col]
 
     def match_color(self, target: str, color: Color) -> bool:
@@ -144,10 +144,10 @@ class Board:
         """Update chess board by moving the piece to the target position."""
         if is_pawn:
             captured_square = self.en_pas(pos, target, self.get_piece(pos).color)
-            captured_row, captured_col = self.__get_row_col(captured_square)
+            captured_row, captured_col = self.get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
         
-        pos_row, pos_col = self.__get_row_col(pos)
-        target_row, target_col = self.__get_row_col(target)
+        pos_row, pos_col = self.get_row_col(pos)
+        target_row, target_col = self.get_row_col(target)
         self.squares[target_row][target_col] = self.squares[pos_row][pos_col]
         self.squares[pos_row][pos_col] = None
