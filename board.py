@@ -132,11 +132,11 @@ class Board:
                 # Update the rook position
                 self.update(rook_pos, rook_target)
                 rook.pos = rook_target
-                rook.has_castled = True
-                king.has_castled = True
+                # rook.has_castled = True
+                # king.has_castled = True
                 return True
             return False
-        king.has_castled = True
+        # king.has_castled = True
         return True
 
     def keep_checking(self, color: Color, index: tuple[int], direction: tuple[int]) -> list[str]:
@@ -182,6 +182,8 @@ class Board:
         - Check and return the valid piece's available squares
         - Only use for piece that isn't a knight
         """
+        if isinstance(self.get_piece(pos), Knight):
+            return self.get_valid_moves_for_knights(pos)
         orders: list[list[int]] = [
             [-1, 0], [-1, 1], [0, 1], [1, 1],
             [1, 0], [1, -1], [0, -1], [-1, -1]
@@ -202,16 +204,25 @@ class Board:
                 if isinstance(piece, Pawn):  # Check for en passant case
                     if self.en_pas(pos, target, piece.color) is not False:
                         available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
+                elif isinstance(piece, King):  # Check for castle case
+                    if self.castle(pos, target, piece.color):
+                        available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
                 else:
                     available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
         return available_squares
 
-    def update(self, pos: str, target: str, is_pawn: bool = False) -> None:
+    def update(self, pos: str, target: str, is_pawn: bool = False, do_castle: bool = False) -> None:
         """Update chess board by moving the piece to the target position."""
         if is_pawn:
             captured_square = self.en_pas(pos, target, self.get_piece(pos).color)
             captured_row, captured_col = self.get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
+        if do_castle:
+            rook_pos = 'a' + target[1] if target[0] == 'c' else 'h'
+            rook: Rook = self.get_piece(rook_pos)
+            rook.pos = 'd' + target[1] if target[0] == 'c' else 'f'
+            rook.has_castled = True
+            self.get_piece(pos).has_castled = True
         
         pos_row, pos_col = self.get_row_col(pos)
         target_row, target_col = self.get_row_col(target)
