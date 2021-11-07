@@ -218,11 +218,15 @@ class Board:
             captured_row, captured_col = self.get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
         if do_castle:
-            rook_pos = 'a' + target[1] if target[0] == 'c' else 'h'
+            rook_pos = 'a' if target[0] == 'c' else 'h'
+            rook_pos += target[1]
             rook: Rook = self.get_piece(rook_pos)
-            rook.pos = 'd' + target[1] if target[0] == 'c' else 'f'
+            rook_target = 'd' if target[0] == 'c' else 'f'
+            rook_target += target[1]
+            rook.pos = rook_target
             rook.has_castled = True
             self.get_piece(pos).has_castled = True
+            self.update(rook_pos, rook_target)
         
         pos_row, pos_col = self.get_row_col(pos)
         target_row, target_col = self.get_row_col(target)
