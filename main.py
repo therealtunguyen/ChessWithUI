@@ -27,13 +27,28 @@ def have_winner(board: Board) -> bool:
         return True
     return False
 
+def promotion() -> Union[type, None]:
+    print("Choose a number corresponding to a piece that you would like to promote!")
+    print("1. Queen   2. Rook   3. Bishop   4. Knight")
+    choice: int = int(input("Choice: "))
+    if choice == 1:
+        return Queen
+    elif choice == 2:
+        return Rook
+    elif choice == 3:
+        return Bishop
+    elif choice == 4:
+        return Knight
+    return None
+
 def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> None:
-    """
-    - Check if there the piece moves to its color, update the board if it doesn't
-    - Return False if the piece moves to its color
-    """
+    """Move the piece on the board"""
     is_a_pawn: bool = isinstance(piece, Pawn)
     is_a_king: bool = isinstance(piece, King)
+    promote_type = None
+    if is_a_pawn:  # Check for promotion
+        if piece.can_promote(target_square):
+            promote_type = promotion()
     if is_a_king:
         do_castle: bool = piece.castle(target_square)
     board.update(
@@ -42,6 +57,9 @@ def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_s
         do_castle=(is_a_king and do_castle)
     )
     piece.pos = target_square
+    if promote_type is not None:
+        promote_piece_row, promote_piece_col = board.get_row_col(target_square)
+        board.squares[promote_piece_row][promote_piece_col] = promote_type(target_square, piece.color)
 
 def able_to_move_on_board(chosen_square: str, target_square: str,piece: Piece, board: Board) -> bool:
     """
