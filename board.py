@@ -73,7 +73,7 @@ class Board:
             return False
         return piece.color == current_color
 
-    def en_pas(self, pos: str, target: str, color: Color) -> Union[str, bool]:
+    def en_pas(self, pos: str, target: str, color: Color, is_active: bool = True) -> Union[str, bool]:
         """
         - This can only be called if the piece at pos is a pawn.
         - Return the square that is captured by the pawn if it moves diagonally
@@ -82,6 +82,8 @@ class Board:
         """
         pawn: Pawn = self.get_piece(pos)
         if pawn.move_diagonal(target, color):
+            if not is_active:
+                return target
             if color == Color.WHITE:
                 if self.get_piece(target) is not None:  # Pawn can only capture if there is a piece there
                     return target
@@ -132,14 +134,11 @@ class Board:
                 # Update the rook position
                 self.update(rook_pos, rook_target)
                 rook.pos = rook_target
-                # rook.has_castled = True
-                # king.has_castled = True
                 return True
             return False
-        # king.has_castled = True
         return True
 
-    def keep_checking(self, color: Color, index: tuple[int], direction: tuple[int]) -> list[str]:
+    def keep_checking_for_squares(self, color: Color, index: tuple[int], direction: tuple[int], is_active: bool = True, is_king: bool = False) -> list[str]:
         """Keep checking valid squares"""
         original_pos: str = self.get_square_name(*index)
         row_target: int
@@ -160,8 +159,14 @@ class Board:
                 elif target_piece is not None:
                     if self.match_color(target, color):
                         break
-                    elif not self.match_color(target, color):
+                    else:
+                        if is_active and is_king:
+                            if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
+                                break
                         has_eaten = True
+                if is_active and is_king:
+                    if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
+                        break
                 valid_squares.append(target)
         return valid_squares
 
@@ -177,10 +182,12 @@ class Board:
                     valid_squares.append(target)
         return valid_squares
 
-    def get_valid_moves(self, pos: str) -> list[str]:
+    def get_valid_moves(self, pos: str, is_active: bool = True) -> list[str]:
         """
         - Check and return the valid piece's available squares
         - Only use for piece that isn't a knight
+        :param pos: The position of the piece
+        :param active: If the piece is the player's piece
         """
         if isinstance(self.get_piece(pos), Knight):
             return self.get_valid_moves_for_knights(pos)
@@ -202,13 +209,13 @@ class Board:
             target: str = self.get_square_name(row_order, col_order)
             if piece.can_move(target):
                 if isinstance(piece, Pawn):  # Check for en passant case
-                    if self.en_pas(pos, target, piece.color) is not False:
-                        available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
+                    if self.en_pas(pos, target, piece.color, is_active) is not False:
+                        available_squares.extend(self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active))
                 elif isinstance(piece, King):  # Check for castle case
                     if self.castle(pos, target, piece.color):
-                        available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
+                        available_squares.extend(self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active, is_king=True))
                 else:
-                    available_squares.extend(self.keep_checking(piece.color, (row, col), (order[0], order[1])))
+                    available_squares.extend(self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active))
         return available_squares
 
     def update(self, pos: str, target: str, is_pawn: bool = False, do_castle: bool = False) -> None:
@@ -232,3 +239,21 @@ class Board:
         target_row, target_col = self.get_row_col(target)
         self.squares[target_row][target_col] = self.squares[pos_row][pos_col]
         self.squares[pos_row][pos_col] = None
+
+    def get_all_valid_moves(self, color: Color, is_active: bool) -> list[str]:
+        """Get all valid moves for the given color"""
+        valid_moves: list[str] = []
+        for row in range(8):
+            for col in range(8):
+                pos: str = self.get_square_name(row, col)
+                piece: Piece = self.get_piece(pos)
+                if piece is not None and piece.color == color:
+                    valid_moves.extend(self.get_valid_moves(pos, is_active))
+        return list(set(valid_moves))
+
+    def get_opposite_color(self, color: Color) -> Color:
+        """Get the opposite color of the given color"""
+        if color == Color.WHITE:
+            return Color.BLACK
+        else:
+            return Color.WHITE
