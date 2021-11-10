@@ -1,10 +1,12 @@
 from pieces import *
 from typing import Union
 
+
 class Board:
     """
     A class that represents a chess board.
     """
+
     squares: list
 
     def __init__(self):
@@ -23,7 +25,7 @@ class Board:
         self.squares[0][6] = Knight("g8", Color.BLACK)
         self.squares[0][7] = Rook("h8", Color.BLACK)
         for i in range(8):
-            self.squares[1][i] = Pawn(chr(ord("a") + i) + '7', Color.BLACK)
+            self.squares[1][i] = Pawn(chr(ord("a") + i) + "7", Color.BLACK)
 
         self.squares[7][0] = Rook("a1", Color.WHITE)
         self.squares[7][1] = Knight("b1", Color.WHITE)
@@ -34,7 +36,7 @@ class Board:
         self.squares[7][6] = Knight("g1", Color.WHITE)
         self.squares[7][7] = Rook("h1", Color.WHITE)
         for i in range(8):
-            self.squares[6][i] = Pawn(chr(ord("a") + i) + '2', Color.WHITE)
+            self.squares[6][i] = Pawn(chr(ord("a") + i) + "2", Color.WHITE)
 
     def __repr__(self):
         """Displays the board."""
@@ -118,15 +120,15 @@ class Board:
         """
         king: King = self.get_piece(pos)
         if king.castle(target):
-            rook_pos = 'a' if target[0] == 'c' else 'h'
-            rook_target = 'd' if target[0] == 'c' else 'f'
+            rook_pos = "a" if target[0] == "c" else "h"
+            rook_target = "d" if target[0] == "c" else "f"
             if color == Color.WHITE:
-                rook_pos += '1'
-                rook_target += '1'
+                rook_pos += "1"
+                rook_target += "1"
             else:
-                rook_pos += '8'
-                rook_target += '8'
-            
+                rook_pos += "8"
+                rook_target += "8"
+
             rook: Union[Rook, None] = self.get_piece(rook_pos)
             if rook is None:
                 return False
@@ -138,7 +140,9 @@ class Board:
             return False
         return True
 
-    def keep_checking_for_squares(self, color: Color, index: tuple[int], direction: tuple[int], is_active: bool = True, is_king: bool = False) -> list[str]:
+    def keep_checking_for_squares(
+        self, color: Color, index: tuple[int], direction: tuple[int], is_active: bool = True, is_king: bool = False
+    ) -> list[str]:
         """Keep checking valid squares"""
         original_pos: str = self.get_square_name(*index)
         row_target: int
@@ -163,11 +167,15 @@ class Board:
                         has_eaten = True
                     else:
                         if is_active and is_king:
-                            if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
+                            if target in self.get_all_valid_moves(
+                                self.get_opposite_color(self.get_piece(original_pos).color), is_active=False
+                            ):
                                 break
                         has_eaten = True
                 if is_active and is_king:
-                    if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
+                    if target in self.get_all_valid_moves(
+                        self.get_opposite_color(self.get_piece(original_pos).color), is_active=False
+                    ):
                         break
                 valid_squares.append(target)
         return valid_squares
@@ -197,16 +205,13 @@ class Board:
         """
         if isinstance(self.get_piece(pos), Knight):
             return self.get_valid_moves_for_knights(pos, is_active)
-        orders: list[list[int]] = [
-            [-1, 0], [-1, 1], [0, 1], [1, 1],
-            [1, 0], [1, -1], [0, -1], [-1, -1]
-        ]
+        orders: list[list[int]] = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]]
         row: int
         col: int
         row, col = self.get_row_col(pos)
         piece: Piece = self.squares[row][col]
         available_squares: list = []
-        
+
         for order in orders:
             row_order = row + order[0]
             col_order = col + order[1]
@@ -216,12 +221,20 @@ class Board:
             if piece.can_move(target):
                 if isinstance(piece, Pawn):  # Check for en passant case
                     if self.en_pas(pos, target, piece.color, is_active) is not False:
-                        available_squares.extend(self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active))
+                        available_squares.extend(
+                            self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active)
+                        )
                 elif isinstance(piece, King):  # Check for castle case
                     if self.castle(pos, target, piece.color):
-                        available_squares.extend(self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active, is_king=True))
+                        available_squares.extend(
+                            self.keep_checking_for_squares(
+                                piece.color, (row, col), (order[0], order[1]), is_active, is_king=True
+                            )
+                        )
                 else:
-                    available_squares.extend(self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active))
+                    available_squares.extend(
+                        self.keep_checking_for_squares(piece.color, (row, col), (order[0], order[1]), is_active)
+                    )
         return available_squares
 
     def update(self, pos: str, target: str, is_pawn: bool = False, do_castle: bool = False) -> None:
@@ -231,16 +244,16 @@ class Board:
             captured_row, captured_col = self.get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
         if do_castle:
-            rook_pos = 'a' if target[0] == 'c' else 'h'
+            rook_pos = "a" if target[0] == "c" else "h"
             rook_pos += target[1]
             rook: Rook = self.get_piece(rook_pos)
-            rook_target = 'd' if target[0] == 'c' else 'f'
+            rook_target = "d" if target[0] == "c" else "f"
             rook_target += target[1]
             rook.pos = rook_target
             rook.has_castled = True
             self.get_piece(pos).has_castled = True
             self.update(rook_pos, rook_target)
-        
+
         pos_row, pos_col = self.get_row_col(pos)
         target_row, target_col = self.get_row_col(target)
         self.squares[target_row][target_col] = self.squares[pos_row][pos_col]
@@ -278,9 +291,54 @@ class Board:
                 if piece is not None and isinstance(piece, King) and piece.color == color:
                     return pos
 
-    def mate(self, color: Color) -> bool:
+    def checkmate(self, color: Color) -> bool:
         """
         - Call this function when the opponent king is in check
         - Return True if the king is mate
         """
         return len(self.get_valid_moves(self.get_king_pos(color), is_active=True)) == 0
+
+    def stalemate(self, color: Color) -> bool:
+        """
+        - Call this function when the opponent king is not in check
+        """
+        if len(self.get_all_valid_moves(color)) == 0:
+            return True
+        num_of_pieces: int = self.count_piece_on_board()
+        if num_of_pieces <= 2:
+            return True
+        elif num_of_pieces == 3:
+            piece: Piece = self.get_pieces_not_king(num_of_pieces)[0]
+            if isinstance(piece, Knight) or isinstance(piece, Bishop):
+                return True
+        elif num_of_pieces == 4:
+            piece_1: Piece
+            piece_2: Piece
+            piece_1, piece_2 = self.get_pieces_not_king(num_of_pieces)
+            if piece_1.color != piece_2.color:
+                if type(piece_1) == type(piece_2):
+                    if isinstance(piece_1, Bishop) or isinstance(piece_1, Knight):
+                        return True
+        return False
+
+    def get_pieces_not_king(self, num_pieces: int) -> list[Piece]:
+        """Return a list of pieces with given length that is not a king"""
+        pieces: list[Piece] = []
+        for row in range(8):
+            for col in range(8):
+                if len(pieces) == num_pieces:
+                    return pieces
+                pos: str = self.get_square_name(row, col)
+                piece: Piece = self.get_piece(pos)
+                if piece is not None and not isinstance(piece, King):
+                    pieces.append(piece)
+        return pieces
+
+    def count_piece_on_board(self) -> int:
+        """Return the number of pieces on the board"""
+        count = 0
+        for row in range(8):
+            for col in range(8):
+                if self.squares[row][col] is not None:
+                    count += 1
+        return count

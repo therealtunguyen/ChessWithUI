@@ -2,16 +2,19 @@
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 
+
 class Color(Enum):
     """Color of a piece"""
+
     WHITE = auto()
     BLACK = auto()
 
 
 class Piece(ABC):
-    symbol: str = '?'
+    symbol: str = "?"
 
     """Abstract class for chess pieces"""
+
     def __init__(self, pos: str, color: Color) -> None:
         self.pos: str = pos
         self.color: Color = color
@@ -23,7 +26,7 @@ class Piece(ABC):
         """Check if the target square is on the board or not"""
         letter, number = target[0], target[1]
         if letter.isalpha() and number.isnumeric():
-            if letter in 'abcdefgh' and number in '12345678':
+            if letter in "abcdefgh" and number in "12345678":
                 return True
         return False
 
@@ -31,14 +34,15 @@ class Piece(ABC):
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
 
-    
+
 class Rook(Piece):
     """Rook class"""
+
     has_castled = False
 
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
-        self.symbol = 'wR' if self.color == Color.WHITE else 'bR'
+        self.symbol = "wR" if self.color == Color.WHITE else "bR"
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
@@ -50,9 +54,10 @@ class Rook(Piece):
 
 class Bishop(Piece):
     """Bishop class"""
+
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
-        self.symbol = 'wB' if self.color == Color.WHITE else 'bB'
+        self.symbol = "wB" if self.color == Color.WHITE else "bB"
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
@@ -61,11 +66,13 @@ class Bishop(Piece):
                 return True
         return False
 
+
 class Queen(Piece):
     """Queen class"""
+
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
-        self.symbol = 'wQ' if self.color == Color.WHITE else 'bQ'
+        self.symbol = "wQ" if self.color == Color.WHITE else "bQ"
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
@@ -79,11 +86,12 @@ class Queen(Piece):
 
 class King(Piece):
     """King class"""
+
     has_castled = False
 
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
-        self.symbol = 'wK' if self.color == Color.WHITE else 'bK'
+        self.symbol = "wK" if self.color == Color.WHITE else "bK"
 
     def castle(self, target: str) -> bool:
         """Return True if the king wants to castle and do not care whether it is a valid move"""
@@ -104,9 +112,10 @@ class King(Piece):
 
 class Knight(Piece):
     """Knight class"""
+
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
-        self.symbol = 'wN' if self.color == Color.WHITE else 'bN'
+        self.symbol = "wN" if self.color == Color.WHITE else "bN"
 
     def can_move(self, target: str) -> bool:
         """Return True if the piece can move to the target and do not care whether it is valid"""
@@ -120,11 +129,12 @@ class Knight(Piece):
 
 class Pawn(Piece):
     """Pawn class"""
+
     jump = False  # If the pawn moves two squares, jump will be True
 
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
-        self.symbol = 'wP' if self.color == Color.WHITE else 'bP'
+        self.symbol = "wP" if self.color == Color.WHITE else "bP"
 
     def move_diagonal(self, target: str, color: Color) -> bool:
         """Check if the pawn is moving diagonally"""
@@ -141,10 +151,10 @@ class Pawn(Piece):
     def can_promote(self, target: str) -> bool:
         """Return True if the pawn is able to promote"""
         if self.color == Color.WHITE:
-            if target[1] == '8':
+            if target[1] == "8":
                 return True
         else:
-            if target[1] == '1':
+            if target[1] == "1":
                 return True
         return False
 
@@ -155,7 +165,7 @@ class Pawn(Piece):
                 if target[0] == self.pos[0]:
                     if int(target[1]) - int(self.pos[1]) == 1:
                         return True
-                    elif int(target[1]) - int(self.pos[1]) == 2 and self.pos[1] == '2':
+                    elif int(target[1]) - int(self.pos[1]) == 2 and self.pos[1] == "2":
                         self.jump = True
                         return True
                 else:
@@ -164,7 +174,7 @@ class Pawn(Piece):
                 if target[0] == self.pos[0]:
                     if int(target[1]) - int(self.pos[1]) == -1:
                         return True
-                    elif int(target[1]) - int(self.pos[1]) == -2 and self.pos[1] == '7':
+                    elif int(target[1]) - int(self.pos[1]) == -2 and self.pos[1] == "7":
                         self.jump = True
                         return True
                 else:
