@@ -17,16 +17,6 @@ def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str]:
         piece = board.get_piece(chosen_square)
     return (piece, chosen_square)
 
-def have_winner(board: Board) -> bool:
-    """Checking if there is a winner"""
-    if board.check_mate(Color.WHITE):
-        print("Black wins!")
-        return True
-    elif board.check_mate(Color.BLACK):
-        print("White wins!")
-        return True
-    return False
-
 def promotion() -> Union[type, None]:
     print("Choose a number corresponding to a piece that you would like to promote!")
     print("1. Queen   2. Rook   3. Bishop   4. Knight")
@@ -41,7 +31,7 @@ def promotion() -> Union[type, None]:
         return Knight
     return None
 
-def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> None:
+def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
     """Move the piece on the board"""
     is_a_pawn: bool = isinstance(piece, Pawn)
     is_a_king: bool = isinstance(piece, King)
@@ -57,11 +47,15 @@ def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_s
         do_castle=(is_a_king and do_castle)
     )
     piece.pos = target_square
+    if board.can_check(piece):
+        print("Check!")
+        return True
     if promote_type is not None:
         promote_piece_row, promote_piece_col = board.get_row_col(target_square)
         board.squares[promote_piece_row][promote_piece_col] = promote_type(target_square, piece.color)
+    return False
 
-def able_to_move_on_board(chosen_square: str, target_square: str,piece: Piece, board: Board) -> bool:
+def able_to_move_on_board(chosen_square: str, target_square: str, board: Board) -> bool:
     """
     - Moving the piece
     - Return True if moving the piece is successful
@@ -89,9 +83,13 @@ def main() -> None:
         target_square: str = input(f"Where would you like to move from {chosen_square} to: ")
 
         # Move the piece
-        if able_to_move_on_board(chosen_square, target_square, piece, board):
+        if able_to_move_on_board(chosen_square, target_square, board):
             print(f"Moving from {chosen_square} to {target_square}...\n")
-            move_piece_on_board(board, piece, chosen_square, target_square)
+            # If check
+            if move_piece_on_board(board, piece, chosen_square, target_square):
+                if board.check_mate(board.get_opposite_color(piece.color)):
+                    print(f"Checkmate! {piece.color} wins!")
+                    break
             # Change the current player's color
             current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
         else:

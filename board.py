@@ -145,8 +145,8 @@ class Board:
         col_target: int
         row_target, col_target = index
         valid_squares: list = []
-        has_eaten: bool = False
-        while not has_eaten:
+        has_eaten: int = 0 if is_active else -1
+        while has_eaten < 1:
             row_target += direction[0]
             col_target += direction[1]
             if row_target < 0 or row_target > 7 or col_target < 0 or col_target > 7:
@@ -163,14 +163,14 @@ class Board:
                         if is_active and is_king:
                             if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
                                 break
-                        has_eaten = True
+                        has_eaten += 1
                 if is_active and is_king:
                     if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
                         break
                 valid_squares.append(target)
         return valid_squares
 
-    def get_valid_moves_for_knights(self, pos: str) -> list[str]:
+    def get_valid_moves_for_knights(self, pos: str, is_active: bool = True) -> list[str]:
         """Returns a list of valid squares for the knight at the given position."""
         # Loop through all the squares and append to the list if it is valid
         valid_squares: list = []
@@ -178,8 +178,12 @@ class Board:
         for i in range(8):
             for j in range(8):
                 target: str = self.get_square_name(i, j)
-                if knight.can_move(target) and not self.match_color(target, knight.color):
-                    valid_squares.append(target)
+                if knight.can_move(target):
+                    if is_active:
+                        if not self.match_color(target, knight.color):
+                            valid_squares.append(target)
+                    else:
+                        valid_squares.append(target)
         return valid_squares
 
     def get_valid_moves(self, pos: str, is_active: bool = True) -> list[str]:
@@ -190,7 +194,7 @@ class Board:
         :param active: If the piece is the player's piece
         """
         if isinstance(self.get_piece(pos), Knight):
-            return self.get_valid_moves_for_knights(pos)
+            return self.get_valid_moves_for_knights(pos, is_active)
         orders: list[list[int]] = [
             [-1, 0], [-1, 1], [0, 1], [1, 1],
             [1, 0], [1, -1], [0, -1], [-1, -1]
@@ -257,3 +261,24 @@ class Board:
             return Color.BLACK
         else:
             return Color.WHITE
+
+    def can_check(self, piece: Piece) -> bool:
+        """Check if the given piece can check the opponent king"""
+        piece_moves = self.get_valid_moves(piece.pos)
+        return self.get_king_pos(self.get_opposite_color(piece.color)) in piece_moves
+
+    def get_king_pos(self, color: Color) -> str:
+        """Get the position of the king of the given color"""
+        for row in range(8):
+            for col in range(8):
+                pos: str = self.get_square_name(row, col)
+                piece: Piece = self.get_piece(pos)
+                if piece is not None and isinstance(piece, King) and piece.color == color:
+                    return pos
+
+    def check_mate(self, color: Color) -> bool:
+        """
+        - Call this function when the opponent king is in check
+        - Return True if the king is mate
+        """
+        return len(self.get_valid_moves(self.get_king_pos(color), is_active=True)) == 0
