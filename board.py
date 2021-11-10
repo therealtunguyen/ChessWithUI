@@ -278,7 +278,7 @@ class Board:
                 if piece is not None and isinstance(piece, King) and piece.color == color:
                     return pos
 
-    def check_mate(self, color: Color) -> bool:
+    def mate(self, color: Color) -> bool:
         """
         - Call this function when the opponent king is in check
         - Return True if the king is mate

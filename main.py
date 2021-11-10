@@ -47,12 +47,12 @@ def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_s
         do_castle=(is_a_king and do_castle)
     )
     piece.pos = target_square
-    if board.can_check(piece):
-        print("Check!")
-        return True
     if promote_type is not None:
         promote_piece_row, promote_piece_col = board.get_row_col(target_square)
         board.squares[promote_piece_row][promote_piece_col] = promote_type(target_square, piece.color)
+    if board.can_check(board.squares[promote_piece_row][promote_piece_col]):
+        print("Check!")
+        return True
     return False
 
 def able_to_move_on_board(chosen_square: str, target_square: str, board: Board) -> bool:
@@ -87,8 +87,12 @@ def main() -> None:
             print(f"Moving from {chosen_square} to {target_square}...\n")
             # If check
             if move_piece_on_board(board, piece, chosen_square, target_square):
-                if board.check_mate(board.get_opposite_color(piece.color)):
+                if board.mate(board.get_opposite_color(piece.color)):
                     print(f"Checkmate! {piece.color} wins!")
+                    break
+            else:  #  If not check
+                if board.mate(board.get_opposite_color(piece.color)):
+                    print("Stalemate!")
                     break
             # Change the current player's color
             current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
