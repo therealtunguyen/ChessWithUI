@@ -34,7 +34,9 @@ def promotion() -> Union[type, None]:
     return None
 
 
-def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_square: str) -> bool:
+def move_piece_on_board(
+    board: Board, piece: Piece, chosen_square: str, target_square: str
+) -> bool:
     """Move the piece on the board"""
     is_a_pawn: bool = isinstance(piece, Pawn)
     is_a_king: bool = isinstance(piece, King)
@@ -44,11 +46,18 @@ def move_piece_on_board(board: Board, piece: Piece, chosen_square: str, target_s
             promote_type = promotion()
     if is_a_king:
         do_castle: bool = piece.castle(target_square)
-    board.update(chosen_square, target_square, is_pawn=is_a_pawn, do_castle=(is_a_king and do_castle))
+    board.update(
+        chosen_square,
+        target_square,
+        is_pawn=is_a_pawn,
+        do_castle=(is_a_king and do_castle),
+    )
     piece.pos = target_square
     if promote_type is not None:
         promote_piece_row, promote_piece_col = board.get_row_col(target_square)
-        board.squares[promote_piece_row][promote_piece_col] = promote_type(target_square, piece.color)
+        board.squares[promote_piece_row][promote_piece_col] = promote_type(
+            target_square, piece.color
+        )
     if board.can_check(board.get_piece(target_square)):
         print("Check!")
         return True
@@ -80,16 +89,32 @@ def main() -> None:
         piece: Piece
         chosen_square: str
         piece, chosen_square = validate_piece(current_player, board)
-        target_square: str = input(f"Where would you like to move from {chosen_square} to: ")
+        target_square: str = input(
+            f"Where would you like to move from {chosen_square} to: "
+        )
 
         # Move the piece
         if able_to_move_on_board(chosen_square, target_square, board):
             print(f"Moving from {chosen_square} to {target_square}...")
             # If check
             if move_piece_on_board(board, piece, chosen_square, target_square):
-                if board.checkmate(board.get_opposite_color(piece.color)):
-                    print(f"Checkmate! {piece.color} wins!")
-                    break
+                moves_to_cover_check: list = board.move_to_not_mate(
+                    board.get_opposite_color(piece.color)
+                )
+                king_moves_to_live: list = board.get_valid_moves(
+                    board.get_king_pos(board.get_opposite_color(piece.color))
+                )
+                # If there are moves to cover check
+                if moves_to_cover_check:
+                    # Extend with the king's moves
+                    moves_to_cover_check.extend(king_moves_to_live)
+                    print(f"Moves to cover check: {moves_to_cover_check}")
+                else:  # If there are no moves to cover check
+                    if king_moves_to_live:
+                        print(f"King's moves to live: {king_moves_to_live}")
+                    else:
+                        print("Checkmate!")
+                        break
             else:  #  If not check
                 if board.stalemate(board.get_opposite_color(piece.color)):
                     print("Stalemate!")
