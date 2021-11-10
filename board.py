@@ -145,8 +145,8 @@ class Board:
         col_target: int
         row_target, col_target = index
         valid_squares: list = []
-        has_eaten: int = 0 if is_active else -1
-        while has_eaten < 1:
+        has_eaten: bool = False
+        while not has_eaten:
             row_target += direction[0]
             col_target += direction[1]
             if row_target < 0 or row_target > 7 or col_target < 0 or col_target > 7:
@@ -157,13 +157,15 @@ class Board:
                 if not self.get_piece(original_pos).can_move(target):
                     break
                 elif target_piece is not None:
-                    if self.match_color(target, color):
+                    if self.match_color(target, color) and is_active:
                         break
+                    elif not is_active and self.match_color(target, self.get_opposite_color(color)):
+                        has_eaten = True
                     else:
                         if is_active and is_king:
                             if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
                                 break
-                        has_eaten += 1
+                        has_eaten = True
                 if is_active and is_king:
                     if target in self.get_all_valid_moves(self.get_opposite_color(self.get_piece(original_pos).color), is_active=False):
                         break
@@ -244,7 +246,7 @@ class Board:
         self.squares[target_row][target_col] = self.squares[pos_row][pos_col]
         self.squares[pos_row][pos_col] = None
 
-    def get_all_valid_moves(self, color: Color, is_active: bool) -> list[str]:
+    def get_all_valid_moves(self, color: Color, is_active: bool = True) -> list[str]:
         """Get all valid moves for the given color"""
         valid_moves: list[str] = []
         for row in range(8):
