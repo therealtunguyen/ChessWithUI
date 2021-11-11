@@ -109,7 +109,7 @@ def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, s
 
 def main() -> None:
     board = Board()
-    current_player: Color = Color.BLACK
+    current_player: Color = Color.WHITE
 
     while True:
         # Print the chess board
