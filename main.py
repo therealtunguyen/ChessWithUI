@@ -1,6 +1,7 @@
 from pieces import *
 from board import Board
 from typing import Union
+from Test.cases import case_2
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -108,8 +109,8 @@ def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, s
 
 
 def main() -> None:
-    board = Board()
-    current_player: Color = Color.WHITE
+    board = case_2(Board())
+    current_player: Color = Color.BLACK
 
     while True:
         # Print the chess board
@@ -140,6 +141,7 @@ def main() -> None:
                 if king_moves_to_live:
                     print(f"King's moves to live: {king_moves_to_live}")
                 else:
+                    print(board)
                     print("Checkmate!")
                     break
         else:  #  If not check

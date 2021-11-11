@@ -122,7 +122,7 @@ class Board:
             return False
         return target
 
-    def castle(self, pos: str, target: str, color: Color) -> bool:
+    def castle(self, pos: str, target: str, color: Color, is_active: bool = True) -> bool:
         """
         - This can only be called if the piece at pos is a king.
         - If the king castles, update the rook position and return True.
@@ -130,6 +130,8 @@ class Board:
         """
         king: King = self.get_piece(pos)
         if king.castle(target):
+            if not is_active:
+                return True
             rook_pos = "a" if target[0] == "c" else "h"
             rook_target = "d" if target[0] == "c" else "f"
             if color == Color.WHITE:
@@ -259,7 +261,7 @@ class Board:
                             )
                         )
                 elif isinstance(piece, King):  # Check for castle case
-                    if self.castle(pos, target, piece.color):
+                    if self.castle(pos, target, piece.color, is_active):
                         available_squares.extend(
                             self.keep_checking_for_squares(
                                 piece.color,
@@ -357,11 +359,11 @@ class Board:
                 ):
                     valid_moves = self.get_valid_moves(pos, is_active=True)
                     moves.extend(
-                        keep_wanted(valid_moves, self.piece_can_cover(piece, valid_moves))
+                        keep_wanted(valid_moves, self.move_to_cover(piece, valid_moves))
                     )
         return list(set(moves))
 
-    def piece_can_cover(self, piece: Piece, piece_moves: list[str]) -> list[str]:
+    def move_to_cover(self, piece: Piece, piece_moves: list[str]) -> list[str]:
         """
         - Check if the given piece can cover the opponent king
         - Return list of moves that it can cover
