@@ -1,7 +1,6 @@
 from pieces import *
-from board import Board
+from board import *
 from typing import Union
-from Test.cases import case_2
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -109,8 +108,8 @@ def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, s
 
 
 def main() -> None:
-    board = case_2(Board())
-    current_player: Color = Color.BLACK
+    board = Board()
+    current_player: Color = Color.WHITE
 
     while True:
         # Print the chess board
@@ -127,25 +126,22 @@ def main() -> None:
         # If check
         if move_piece_on_board(board, piece, chosen_square, target_square):
             moves_to_cover_check: list = board.move_to_not_mate(
-                board.get_opposite_color(piece.color)
+                get_opposite_color(piece.color)
             )
             king_moves_to_live: list = board.get_valid_moves(
-                board.get_king_pos(board.get_opposite_color(piece.color))
+                board.get_king_pos(get_opposite_color(piece.color))
             )
             # If there are moves to cover check
             if moves_to_cover_check:
                 # Extend with the king's moves
                 moves_to_cover_check.extend(king_moves_to_live)
-                print(f"Moves to cover check: {moves_to_cover_check}")
             else:  # If there are no moves to cover check
-                if king_moves_to_live:
-                    print(f"King's moves to live: {king_moves_to_live}")
-                else:
+                if not king_moves_to_live:
                     print(board)
                     print("Checkmate!")
                     break
         else:  #  If not check
-            if board.stalemate(board.get_opposite_color(piece.color)):
+            if board.stalemate(get_opposite_color(piece.color)):
                 print("Stalemate!")
                 break
         # Change the current player's color
