@@ -1,7 +1,6 @@
 from pieces import *
 from board import Board
 from typing import Union
-from Test.cases import case_2
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -109,7 +108,7 @@ def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, s
 
 
 def main() -> None:
-    board = case_2(Board())
+    board = Board()
     current_player: Color = Color.BLACK
 
     while True:
