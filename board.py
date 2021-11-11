@@ -2,11 +2,6 @@ from pieces import *
 from typing import Union
 
 
-def keep_wanted(moves: list[str], wanted: list[str]) -> list[str]:
-    """Keep wanted moves from the given list of moves"""
-    return [move for move in moves if move in wanted]
-
-
 class Board:
     """
     A class that represents a chess board.
@@ -469,3 +464,8 @@ def get_opposite_color(color: Color) -> Color:
         return Color.BLACK
     else:
         return Color.WHITE
+
+
+def keep_wanted(moves: list[str], wanted: list[str]) -> list[str]:
+    """Keep wanted moves from the given list of moves"""
+    return [move for move in moves if move in wanted]
