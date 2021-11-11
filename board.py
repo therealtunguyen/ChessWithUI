@@ -2,6 +2,11 @@ from pieces import *
 from typing import Union
 
 
+def keep_wanted(moves: list[str], wanted: list[str]) -> list[str]:
+    """Keep wanted moves from the given list of moves"""
+    return [move for move in moves if move in wanted]
+
+
 class Board:
     """
     A class that represents a chess board.
@@ -53,19 +58,9 @@ class Board:
         board += "  a  b  c  d  e  f  g  h" + "\n" + "=" * 25
         return board
 
-    def get_row_col(self, pos: str) -> tuple[int]:
-        """Returns the row and column of the given position."""
-        col = ord(pos[0]) - ord("a")
-        row = 8 - int(pos[1])
-        return row, col
-
-    def get_square_name(self, row: int, col: int) -> str:
-        """Returns the name of the square at the given row and column."""
-        return chr(ord("a") + col) + str(8 - row)
-
     def get_piece(self, pos: str) -> Union[Piece, None]:
         """Returns the piece at the given position."""
-        row, col = self.get_row_col(pos)
+        row, col = get_row_col(pos)
         return self.squares[row][col]
 
     def match_color(self, target: str, current_color: Color) -> bool:
@@ -161,7 +156,7 @@ class Board:
         is_king: bool = False,
     ) -> list[str]:
         """Keep checking valid squares"""
-        original_pos: str = self.get_square_name(*index)
+        original_pos: str = get_square_name(*index)
         row_target: int
         col_target: int
         row_target, col_target = index
@@ -173,7 +168,7 @@ class Board:
             if row_target < 0 or row_target > 7 or col_target < 0 or col_target > 7:
                 break
             else:
-                target: str = self.get_square_name(row_target, col_target)
+                target: str = get_square_name(row_target, col_target)
                 target_piece: Union[Piece, None] = self.get_piece(target)
                 if not self.get_piece(original_pos).can_move(target):
                     break
@@ -186,16 +181,14 @@ class Board:
                     else:
                         if is_active and is_king:
                             if target in self.get_all_valid_moves(
-                                self.get_opposite_color(
-                                    self.get_piece(original_pos).color
-                                ),
+                                get_opposite_color(self.get_piece(original_pos).color),
                                 is_active=False,
                             ):
                                 break
                         has_eaten = True
                 if is_active and is_king:
                     if target in self.get_all_valid_moves(
-                        self.get_opposite_color(self.get_piece(original_pos).color),
+                        get_opposite_color(self.get_piece(original_pos).color),
                         is_active=False,
                     ):
                         break
@@ -209,7 +202,7 @@ class Board:
         knight: Knight = self.get_piece(pos)
         for i in range(8):
             for j in range(8):
-                target: str = self.get_square_name(i, j)
+                target: str = get_square_name(i, j)
                 if knight.can_move(target):
                     if is_active:
                         if not self.match_color(target, knight.color):
@@ -239,7 +232,7 @@ class Board:
         ]
         row: int
         col: int
-        row, col = self.get_row_col(pos)
+        row, col = get_row_col(pos)
         piece: Piece = self.squares[row][col]
         available_squares: list = []
 
@@ -248,7 +241,7 @@ class Board:
             col_order = col + order[1]
             if row_order < 0 or row_order > 7 or col_order < 0 or col_order > 7:
                 continue
-            target: str = self.get_square_name(row_order, col_order)
+            target: str = get_square_name(row_order, col_order)
             if piece.can_move(target):
                 if isinstance(piece, Pawn):  # Check for en passant case
                     if self.en_pas(pos, target, piece.color, is_active) is not False:
@@ -292,7 +285,7 @@ class Board:
         """Update chess board by moving the piece to the target position."""
         if is_pawn:
             captured_square = self.en_pas(pos, target, self.get_piece(pos).color)
-            captured_row, captured_col = self.get_row_col(captured_square)
+            captured_row, captured_col = get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
         if do_castle:
             rook_pos = "a" if target[0] == "c" else "h"
@@ -305,8 +298,8 @@ class Board:
             self.get_piece(pos).has_castled = True
             self.update(rook_pos, rook_target)
 
-        pos_row, pos_col = self.get_row_col(pos)
-        target_row, target_col = self.get_row_col(target)
+        pos_row, pos_col = get_row_col(pos)
+        target_row, target_col = get_row_col(target)
         self.squares[target_row][target_col] = self.squares[pos_row][pos_col]
         self.squares[pos_row][pos_col] = None
 
@@ -315,29 +308,22 @@ class Board:
         valid_moves: list[str] = []
         for row in range(8):
             for col in range(8):
-                pos: str = self.get_square_name(row, col)
+                pos: str = get_square_name(row, col)
                 piece: Piece = self.get_piece(pos)
                 if piece is not None and piece.color == color:
                     valid_moves.extend(self.get_valid_moves(pos, is_active))
         return list(set(valid_moves))
 
-    def get_opposite_color(self, color: Color) -> Color:
-        """Get the opposite color of the given color"""
-        if color == Color.WHITE:
-            return Color.BLACK
-        else:
-            return Color.WHITE
-
     def can_check(self, piece: Piece) -> bool:
         """Check if the given piece can check the opponent king"""
         piece_moves = self.get_valid_moves(piece.pos)
-        return self.get_king_pos(self.get_opposite_color(piece.color)) in piece_moves
+        return self.get_king_pos(get_opposite_color(piece.color)) in piece_moves
 
     def get_king_pos(self, color: Color) -> str:
         """Get the position of the king of the given color"""
         for row in range(8):
             for col in range(8):
-                pos: str = self.get_square_name(row, col)
+                pos: str = get_square_name(row, col)
                 piece: Piece = self.get_piece(pos)
                 if piece is not None and isinstance(piece, King) and piece.color == color:
                     return pos
@@ -350,7 +336,7 @@ class Board:
         moves: list[str] = []
         for row in range(8):
             for col in range(8):
-                pos: str = self.get_square_name(row, col)
+                pos: str = get_square_name(row, col)
                 piece: Piece = self.get_piece(pos)
                 if (
                     piece is not None
@@ -383,7 +369,7 @@ class Board:
         """
         for row in range(8):
             for col in range(8):
-                pos: str = self.get_square_name(row, col)
+                pos: str = get_square_name(row, col)
                 piece: Piece = self.get_piece(pos)
                 if piece is not None and piece.color != color:
                     if self.can_check(piece):
@@ -420,7 +406,7 @@ class Board:
             for col in range(8):
                 if len(pieces) == num_pieces:
                     return pieces
-                pos: str = self.get_square_name(row, col)
+                pos: str = get_square_name(row, col)
                 piece: Piece = self.get_piece(pos)
                 if piece is not None and not isinstance(piece, King):
                     pieces.append(piece)
@@ -457,19 +443,29 @@ class Board:
         return moves_can_move
 
 
-def keep_wanted(moves: list[str], wanted: list[str]) -> list[str]:
-    """Keep wanted moves from the given list of moves"""
-    return [move for move in moves if move in wanted]
-
-
-def remove_unwanted(moves: list[str], unwanted: list[str]) -> list[str]:
-    """Remove unwanted moves from the given list of moves"""
-    return [move for move in moves if move not in unwanted]
-
-
 def generate_cases(squares: list[Piece], board: Board) -> Board:
     """Generate chess cases"""
     for row in range(8):
         for col in range(8):
             board.squares[row][col] = squares[row][col]
     return board
+
+
+def get_row_col(pos: str) -> tuple[int]:
+    """Returns the row and column of the given position."""
+    col = ord(pos[0]) - ord("a")
+    row = 8 - int(pos[1])
+    return row, col
+
+
+def get_square_name(row: int, col: int) -> str:
+    """Returns the name of the square at the given row and column."""
+    return chr(ord("a") + col) + str(8 - row)
+
+
+def get_opposite_color(color: Color) -> Color:
+    """Get the opposite color of the given color"""
+    if color == Color.WHITE:
+        return Color.BLACK
+    else:
+        return Color.WHITE
