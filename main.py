@@ -1,6 +1,29 @@
 from pieces import *
 from board import *
 from typing import Union
+import pygame
+import chess_items
+from utils import choose_piece
+
+# Screen
+WIDTH, HEIGHT = 800, 600
+SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Chess")
+
+# Colors
+WHITE = (255, 255, 255)
+
+
+def draw_screen(board: Board):
+    SCREEN.fill(WHITE)
+    SCREEN.blit(chess_items.CHESS_BOARD, (0, 0))
+    squares = board.squares
+    for row in range(len(squares)):
+        for col in range(len(squares[row])):
+            piece = squares[row][col]
+            if piece is not None:
+                SCREEN.blit(choose_piece(piece), (col * 75, row * 75))
+    pygame.display.update()
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -148,5 +171,16 @@ def main() -> None:
         current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
 
 
+def main_gui():
+    board: Board = Board()
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        draw_screen(board)
+    pygame.quit()
+
+
 if __name__ == "__main__":
-    main()
+    main_gui()
