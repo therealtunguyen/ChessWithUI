@@ -3,20 +3,41 @@ from board import Board
 from typing import Union
 
 
-def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str]:
+def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
     """Validating the chosen square"""
     chosen_square: str = input("Choose a square to move: ")
     piece: Union[Piece, None] = board.get_piece(chosen_square)
 
     # Make a while loop until the piece is valid
-    while piece is None or piece.color != current_player:
+    while True:
         if piece is None:
             print("No piece on that square")
         elif piece.color != current_player:
             print("That piece is not yours")
+        else:
+            piece_moves: list[str] = board.get_valid_moves(chosen_square)
+            actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
+            if len(actual_piece_moves) == 0:
+                print("That piece cannot move because you will be in check!")
+            else:
+                break
         chosen_square = input("Choose a square to move: ")
         piece = board.get_piece(chosen_square)
-    return (piece, chosen_square)
+    return (piece, chosen_square, actual_piece_moves)
+
+
+def validate_target(board: Board, piece: Piece, piece_moves: list[str]) -> str:
+    """Validating the target square"""
+    target_square: str = input("Choose a square to move to: ")
+    while True:
+        if board.get_checked_when_move(piece, target_square):
+            print("That move will put you in check!")
+        elif target_square not in piece_moves:
+            print("That move is not valid")
+        else:
+            break
+        target_square = input("Choose a square to move to: ")
+    return target_square
 
 
 def promotion() -> Union[type, None]:
@@ -77,6 +98,15 @@ def able_to_move_on_board(chosen_square: str, target_square: str, board: Board) 
         return False
 
 
+def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, str]:
+    """Get the valid input from player"""
+    piece: Piece
+    chosen_square: str
+    piece, chosen_square, valid_moves = validate_piece(current_player, board)
+    target_square: str = validate_target(board, piece, valid_moves)
+    return (piece, chosen_square, target_square)
+
+
 def main() -> None:
     board = Board()
     current_player: Color = Color.WHITE
@@ -88,42 +118,36 @@ def main() -> None:
         # Get player inputs
         piece: Piece
         chosen_square: str
-        piece, chosen_square = validate_piece(current_player, board)
-        target_square: str = input(
-            f"Where would you like to move from {chosen_square} to: "
-        )
+        target_square: str
+        piece, chosen_square, target_square = validate_player_input(current_player, board)
 
         # Move the piece
-        if able_to_move_on_board(chosen_square, target_square, board):
-            print(f"Moving from {chosen_square} to {target_square}...")
-            # If check
-            if move_piece_on_board(board, piece, chosen_square, target_square):
-                moves_to_cover_check: list = board.move_to_not_mate(
-                    board.get_opposite_color(piece.color)
-                )
-                king_moves_to_live: list = board.get_valid_moves(
-                    board.get_king_pos(board.get_opposite_color(piece.color))
-                )
-                # If there are moves to cover check
-                if moves_to_cover_check:
-                    # Extend with the king's moves
-                    moves_to_cover_check.extend(king_moves_to_live)
-                    print(f"Moves to cover check: {moves_to_cover_check}")
-                else:  # If there are no moves to cover check
-                    if king_moves_to_live:
-                        print(f"King's moves to live: {king_moves_to_live}")
-                    else:
-                        print("Checkmate!")
-                        break
-            else:  #  If not check
-                if board.stalemate(board.get_opposite_color(piece.color)):
-                    print("Stalemate!")
+        print(f"Moving from {chosen_square} to {target_square}...")
+        # If check
+        if move_piece_on_board(board, piece, chosen_square, target_square):
+            moves_to_cover_check: list = board.move_to_not_mate(
+                board.get_opposite_color(piece.color)
+            )
+            king_moves_to_live: list = board.get_valid_moves(
+                board.get_king_pos(board.get_opposite_color(piece.color))
+            )
+            # If there are moves to cover check
+            if moves_to_cover_check:
+                # Extend with the king's moves
+                moves_to_cover_check.extend(king_moves_to_live)
+                print(f"Moves to cover check: {moves_to_cover_check}")
+            else:  # If there are no moves to cover check
+                if king_moves_to_live:
+                    print(f"King's moves to live: {king_moves_to_live}")
+                else:
+                    print("Checkmate!")
                     break
-            # Change the current player's color
-            current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
-        else:
-            print("Invalid move")
-        print()
+        else:  #  If not check
+            if board.stalemate(board.get_opposite_color(piece.color)):
+                print("Stalemate!")
+                break
+        # Change the current player's color
+        current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
 
 
 if __name__ == "__main__":

@@ -181,10 +181,6 @@ class Board:
                 elif target_piece is not None:
                     if self.match_color(target, color) and is_active:
                         break
-                    elif not is_active and self.match_color(
-                        target, self.get_opposite_color(color)
-                    ):
-                        has_eaten = True
                     else:
                         if is_active and is_king:
                             if target in self.get_all_valid_moves(
@@ -437,10 +433,36 @@ class Board:
                     count += 1
         return count
 
+    def get_checked_when_move(self, piece: Piece, target: str) -> bool:
+        """Check if the given piece moves to the target, the king with the corresponding color is checked or not"""
+        copy_of_board: Board = generate_cases(self.squares, Board())
+        copy_of_board.update(piece.pos, target, is_pawn=isinstance(piece, Pawn))
+        if copy_of_board.can_be_checked(piece.color):
+            return True
+        return False
+
+    def process_target(self, piece: Piece, piece_moves: list[str]) -> list[str]:
+        """
+        - Check if the given piece can move to the target
+        - Return list of moves that it can move to
+        """
+        moves_can_move: list[str] = []
+        for move in piece_moves:
+            copy_of_board: Board = generate_cases(self.squares, Board())
+            copy_of_board.update(piece.pos, move, is_pawn=isinstance(piece, Pawn))
+            if not copy_of_board.can_be_checked(piece.color):
+                moves_can_move.append(move)
+        return moves_can_move
+
 
 def keep_wanted(moves: list[str], wanted: list[str]) -> list[str]:
-    """Remove unwanted moves from the given list of moves"""
+    """Keep wanted moves from the given list of moves"""
     return [move for move in moves if move in wanted]
+
+
+def remove_unwanted(moves: list[str], unwanted: list[str]) -> list[str]:
+    """Remove unwanted moves from the given list of moves"""
+    return [move for move in moves if move not in unwanted]
 
 
 def generate_cases(squares: list[Piece], board: Board) -> Board:
