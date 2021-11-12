@@ -16,7 +16,7 @@ RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 
 
-def draw_screen(board: Board):
+def draw_screen(board: Board, piece_moves: list[str], draw_moves: bool) -> None:
     SCREEN.fill(WHITE)
     SCREEN.blit(ci.CHESS_BOARD, (0, 0))
     squares = board.squares
@@ -24,8 +24,19 @@ def draw_screen(board: Board):
         for col in range(len(squares[row])):
             piece: Union[Piece, None] = squares[row][col]
             if piece is not None:
+                if piece.is_clicked:
+                    pygame.draw.rect(SCREEN, YELLOW, (col * 75, row * 75, 75, 75))
                 SCREEN.blit(piece.img, (col * 75, row * 75))
+    if draw_moves:
+        draw_available_moves(piece_moves)
     pygame.display.update()
+
+
+def draw_available_moves(piece_moves: list[str]) -> None:
+    """Draw the available moves on the board"""
+    for move in piece_moves:
+        row, col = get_row_col(move)
+        pygame.draw.circle(SCREEN, GREEN, (col * 75 + 37, row * 75 + 37), 10)
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -96,11 +107,13 @@ def validate_target_piece(
 ) -> bool:
     """Validating the target square"""
     target_square: str = get_square_name(index[0], index[1])
+    if target_square == piece.pos:
+        return False
+    if target_square not in piece_moves:
+        print("That move is not valid")
+        return False
     if board.get_checked_when_move(piece, target_square):
         print("That move will put you in check!")
-        return False
-    elif target_square not in piece_moves:
-        print("That move is not valid")
         return False
     return True
 
@@ -140,7 +153,7 @@ def move_piece_on_board(
     )
     piece.pos = target_square
     if promote_type is not None:
-        promote_piece_row, promote_piece_col = board.get_row_col(target_square)
+        promote_piece_row, promote_piece_col = get_row_col(target_square)
         board.squares[promote_piece_row][promote_piece_col] = promote_type(
             target_square, piece.color
         )
@@ -218,13 +231,13 @@ def main_gui():
     current_player: Color = Color.WHITE
     is_choosing_target: bool = False
     can_move_piece: bool = False
+    piece_moves: list[str] = []
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                print(current_player)
                 row, col = pygame.mouse.get_pos()
                 row = row // 75
                 col = col // 75
@@ -232,21 +245,23 @@ def main_gui():
                     if not is_choosing_target:
                         if validate_chosen_piece(current_player, board, (col, row)):
                             piece: Piece = board.squares[col][row]
+                            piece.is_clicked = True
                             piece_moves: list[str] = get_piece_moves(
                                 board, board.squares[col][row]
                             )
                             is_choosing_target = True
                     else:
+                        is_choosing_target = False
                         if validate_target_piece(board, piece, piece_moves, (col, row)):
-                            is_choosing_target = False
                             can_move_piece = True
                             target: str = get_square_name(col, row)
-                            print(f"Can move to {get_square_name(col, row)}")
                             current_player = (
                                 Color.BLACK
                                 if current_player == Color.WHITE
                                 else Color.WHITE
                             )
+                        else:
+                            piece.is_clicked = False
         if can_move_piece:
             # If check
             if move_piece_on_board(board, piece, piece.pos, target):
@@ -269,8 +284,9 @@ def main_gui():
                     print("Stalemate!")
                     running = False
             can_move_piece = False
+            piece.is_clicked = False
 
-        draw_screen(board)
+        draw_screen(board, piece_moves, draw_moves=is_choosing_target)
     pygame.quit()
 
 

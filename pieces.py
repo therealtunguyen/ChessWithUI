@@ -14,6 +14,7 @@ class Color(Enum):
 
 class Piece(ABC):
     symbol: str = "?"
+    is_clicked = False
 
     """Abstract class for chess pieces"""
 
@@ -40,7 +41,6 @@ class Piece(ABC):
 class Rook(Piece):
     """Rook class"""
 
-    is_clicked = False
     has_castled = False
 
     def __init__(self, pos: str, color: Color) -> None:
@@ -61,8 +61,6 @@ class Rook(Piece):
 class Bishop(Piece):
     """Bishop class"""
 
-    is_clicked = False
-
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
         self.symbol = "wB" if self.color == Color.WHITE else "bB"
@@ -82,8 +80,6 @@ class Bishop(Piece):
 
 class Queen(Piece):
     """Queen class"""
-
-    is_clicked = False
 
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
@@ -107,7 +103,6 @@ class Queen(Piece):
 class King(Piece):
     """King class"""
 
-    is_clicked = False
     has_castled = False
 
     def __init__(self, pos: str, color: Color) -> None:
@@ -144,8 +139,6 @@ class King(Piece):
 class Knight(Piece):
     """Knight class"""
 
-    is_clicked = False
-
     def __init__(self, pos: str, color: Color) -> None:
         super().__init__(pos, color)
         self.symbol = "wN" if self.color == Color.WHITE else "bN"
@@ -172,7 +165,6 @@ class Knight(Piece):
 class Pawn(Piece):
     """Pawn class"""
 
-    is_clicked = False
     jump = False  # If the pawn moves two squares, jump will be True
 
     def __init__(self, pos: str, color: Color) -> None:
