@@ -2,8 +2,7 @@ from pieces import *
 from board import *
 from typing import Union
 import pygame
-import chess_items
-from utils import choose_piece
+import chess_items as ci
 
 # Screen
 WIDTH, HEIGHT = 800, 600
@@ -12,17 +11,20 @@ pygame.display.set_caption("Chess")
 
 # Colors
 WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 
 
 def draw_screen(board: Board):
     SCREEN.fill(WHITE)
-    SCREEN.blit(chess_items.CHESS_BOARD, (0, 0))
+    SCREEN.blit(ci.CHESS_BOARD, (0, 0))
     squares = board.squares
     for row in range(len(squares)):
         for col in range(len(squares[row])):
-            piece = squares[row][col]
+            piece: Union[Piece, None] = squares[row][col]
             if piece is not None:
-                SCREEN.blit(choose_piece(piece), (col * 75, row * 75))
+                SCREEN.blit(piece.img, (col * 75, row * 75))
     pygame.display.update()
 
 
@@ -49,6 +51,32 @@ def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, lis
     return (piece, chosen_square, actual_piece_moves)
 
 
+def validate_chosen_piece(current_player: Color, board: Board, index: tuple[int]) -> bool:
+    """Validating the chosen square"""
+    piece: Union[Piece, None] = board.squares[index[0]][index[1]]
+
+    if piece is None:
+        print("No piece on that square")
+        return False
+    elif piece.color != current_player:
+        print("That piece is not yours")
+        return False
+    else:
+        piece_moves: list[str] = board.get_valid_moves(piece.pos)
+        actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
+        if len(actual_piece_moves) == 0:
+            print("That piece cannot move!")
+            return False
+    return True
+
+
+def get_piece_moves(board: Board, piece: Piece) -> list[str]:
+    """Get the valid moves of the piece"""
+    piece_moves: list[str] = board.get_valid_moves(piece.pos)
+    actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
+    return actual_piece_moves
+
+
 def validate_target(board: Board, piece: Piece, piece_moves: list[str]) -> str:
     """Validating the target square"""
     target_square: str = input("Choose a square to move to: ")
@@ -61,6 +89,20 @@ def validate_target(board: Board, piece: Piece, piece_moves: list[str]) -> str:
             break
         target_square = input("Choose a square to move to: ")
     return target_square
+
+
+def validate_target_piece(
+    board: Board, piece: Piece, piece_moves: list[str], index: tuple[int]
+) -> bool:
+    """Validating the target square"""
+    target_square: str = get_square_name(index[0], index[1])
+    if board.get_checked_when_move(piece, target_square):
+        print("That move will put you in check!")
+        return False
+    elif target_square not in piece_moves:
+        print("That move is not valid")
+        return False
+    return True
 
 
 def promotion() -> Union[type, None]:
@@ -173,11 +215,61 @@ def main() -> None:
 
 def main_gui():
     board: Board = Board()
+    current_player: Color = Color.WHITE
+    is_choosing_target: bool = False
+    can_move_piece: bool = False
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                print(current_player)
+                row, col = pygame.mouse.get_pos()
+                row = row // 75
+                col = col // 75
+                if row < 8 and col < 8:
+                    if not is_choosing_target:
+                        if validate_chosen_piece(current_player, board, (col, row)):
+                            piece: Piece = board.squares[col][row]
+                            piece_moves: list[str] = get_piece_moves(
+                                board, board.squares[col][row]
+                            )
+                            is_choosing_target = True
+                    else:
+                        if validate_target_piece(board, piece, piece_moves, (col, row)):
+                            is_choosing_target = False
+                            can_move_piece = True
+                            target: str = get_square_name(col, row)
+                            print(f"Can move to {get_square_name(col, row)}")
+                            current_player = (
+                                Color.BLACK
+                                if current_player == Color.WHITE
+                                else Color.WHITE
+                            )
+        if can_move_piece:
+            # If check
+            if move_piece_on_board(board, piece, piece.pos, target):
+                moves_to_cover_check: list = board.move_to_not_mate(
+                    get_opposite_color(piece.color)
+                )
+                king_moves_to_live: list = board.get_valid_moves(
+                    board.get_king_pos(get_opposite_color(piece.color))
+                )
+                # If there are moves to cover check
+                if moves_to_cover_check:
+                    # Extend with the king's moves
+                    moves_to_cover_check.extend(king_moves_to_live)
+                else:  # If there are no moves to cover check
+                    if not king_moves_to_live:
+                        print("Checkmate!")
+                        running = False
+            else:  #  If not check
+                if board.stalemate(get_opposite_color(piece.color)):
+                    print("Stalemate!")
+                    running = False
+            can_move_piece = False
+
         draw_screen(board)
     pygame.quit()
 
