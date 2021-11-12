@@ -107,6 +107,8 @@ class Board:
                         if en_passant_square.jump:
                             return en_passant
                 return False
+        if not is_active:
+            return False
         target_piece: Piece = self.get_piece(target)
         if target_piece is not None:  # Pawn can't move forward
             return False

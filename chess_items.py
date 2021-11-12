@@ -3,7 +3,7 @@ from pygame import Surface
 import os
 
 # Chess board
-CHESS_BOARD_IMG: Surface = pygame.image.load(os.path.join("images", "board.png"))
+CHESS_BOARD_IMG: Surface = pygame.image.load(os.path.join("images", "chess-board.png"))
 CHESS_BOARD: Surface = pygame.transform.scale(CHESS_BOARD_IMG, (600, 600))
 
 # Chess pieces
