@@ -136,7 +136,7 @@ class Board:
             rook: Union[Rook, None] = self.get_piece(rook_pos)
             if rook is None:
                 return False
-            elif not king.has_castled and not rook.has_castled:
+            elif not king.has_castled and not king.in_check and not rook.has_castled:
                 # Update the rook position
                 self.update(rook_pos, rook_target)
                 rook.pos = rook_target
@@ -184,6 +184,10 @@ class Board:
                                 break
                         has_eaten = True
                 if is_active and is_king:
+                    king: King = self.get_piece(original_pos)
+                    if king.castle(target):
+                        if self.get_piece("b" + king.pos[1]) is not None:
+                            break
                     if target in self.get_all_valid_moves(
                         get_opposite_color(self.get_piece(original_pos).color),
                         is_active=False,

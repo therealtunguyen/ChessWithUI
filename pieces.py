@@ -103,6 +103,7 @@ class Queen(Piece):
 class King(Piece):
     """King class"""
 
+    in_check = False
     has_castled = False
 
     def __init__(self, pos: str, color: Color) -> None:
@@ -131,6 +132,8 @@ class King(Piece):
                 target[1] == self.pos[1]
                 and abs(ord(target[0]) - ord(self.pos[0])) == 2
                 and not self.has_castled
+                and not self.in_check
+                and self.pos[0] == "e"
             ):
                 return True
         return False

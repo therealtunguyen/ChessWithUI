@@ -1,8 +1,11 @@
 from pieces import *
 from board import *
 from typing import Union
+import time
 import pygame
 import chess_items as ci
+
+pygame.font.init()
 
 # Screen
 WIDTH, HEIGHT = 800, 600
@@ -11,14 +14,33 @@ pygame.display.set_caption("Chess")
 
 # Colors
 WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+DARK_BROWN = (166, 119, 91)
 YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+
+FONT = pygame.font.SysFont("comicsans", 30)
+MATE_FONT = pygame.font.SysFont("comicsans", 100)
+WINNER_FONT = pygame.font.SysFont("comicsans", 70)
+CHECK_TEXT = FONT.render("Check!", True, RED)
+CHECKMATE_TEXT = MATE_FONT.render("Checkmate!", True, RED)
+STALEMATE_TEXT = MATE_FONT.render("Stalemate!", True, RED)
 
 
-def draw_screen(board: Board, piece_moves: list[str], draw_moves: bool) -> None:
+def draw_screen(
+    board: Board,
+    current_player: Color,
+    piece_moves: list[str],
+    draw_moves: bool,
+    check: bool,
+) -> None:
     SCREEN.fill(WHITE)
     SCREEN.blit(ci.CHESS_BOARD, (0, 0))
+
+    pygame.draw.rect(SCREEN, DARK_BROWN, (600, 450, 200, 150))
+    draw_current_player(current_player)
+    SCREEN.blit(CHECK_TEXT, (665, 520)) if check else None
+
     squares = board.squares
     for row in range(len(squares)):
         for col in range(len(squares[row])):
@@ -32,11 +54,31 @@ def draw_screen(board: Board, piece_moves: list[str], draw_moves: bool) -> None:
     pygame.display.update()
 
 
+def draw_winner(current_player: Color, is_checkmate: bool) -> None:
+    if is_checkmate:
+        SCREEN.blit(CHECKMATE_TEXT, (100, 200))
+    else:
+        SCREEN.blit(STALEMATE_TEXT, (100, 200))
+    color_text = "White" if current_player == Color.WHITE else "Black"
+    winner_text = WINNER_FONT.render(f"{color_text} player wins!!!", True, BLACK)
+    SCREEN.blit(winner_text, (90, 300))
+    pygame.display.update()
+
+
 def draw_available_moves(piece_moves: list[str]) -> None:
     """Draw the available moves on the board"""
     for move in piece_moves:
         row, col = get_row_col(move)
-        pygame.draw.circle(SCREEN, GREEN, (col * 75 + 37, row * 75 + 37), 10)
+        pygame.draw.circle(SCREEN, DARK_BROWN, (col * 75 + 37, row * 75 + 37), 10)
+
+
+def draw_current_player(current_player: Color) -> None:
+    current_text = FONT.render("Current Player", True, WHITE)
+    player: str = "White" if current_player == Color.WHITE else "Black"
+    color_of_player = WHITE if current_player == Color.WHITE else BLACK
+    current_player_text = FONT.render(player, True, color_of_player)
+    SCREEN.blit(current_text, (630, 460))
+    SCREEN.blit(current_player_text, (670, 490))
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -67,16 +109,13 @@ def validate_chosen_piece(current_player: Color, board: Board, index: tuple[int]
     piece: Union[Piece, None] = board.squares[index[0]][index[1]]
 
     if piece is None:
-        print("No piece on that square")
         return False
     elif piece.color != current_player:
-        print("That piece is not yours")
         return False
     else:
         piece_moves: list[str] = board.get_valid_moves(piece.pos)
         actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
         if len(actual_piece_moves) == 0:
-            print("That piece cannot move!")
             return False
     return True
 
@@ -110,10 +149,8 @@ def validate_target_piece(
     if target_square == piece.pos:
         return False
     if target_square not in piece_moves:
-        print("That move is not valid")
         return False
     if board.get_checked_when_move(piece, target_square):
-        print("That move will put you in check!")
         return False
     return True
 
@@ -158,7 +195,6 @@ def move_piece_on_board(
             target_square, piece.color
         )
     if board.can_check(board.get_piece(target_square)):
-        print("Check!")
         return True
     return False
 
@@ -185,53 +221,18 @@ def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, s
     return (piece, chosen_square, target_square)
 
 
-def main() -> None:
-    board = Board()
-    current_player: Color = Color.WHITE
-
-    while True:
-        # Print the chess board
-        print(board)
-
-        # Get player inputs
-        piece: Piece
-        chosen_square: str
-        target_square: str
-        piece, chosen_square, target_square = validate_player_input(current_player, board)
-
-        # Move the piece
-        print(f"Moving from {chosen_square} to {target_square}...")
-        # If check
-        if move_piece_on_board(board, piece, chosen_square, target_square):
-            moves_to_cover_check: list = board.move_to_not_mate(
-                get_opposite_color(piece.color)
-            )
-            king_moves_to_live: list = board.get_valid_moves(
-                board.get_king_pos(get_opposite_color(piece.color))
-            )
-            # If there are moves to cover check
-            if moves_to_cover_check:
-                # Extend with the king's moves
-                moves_to_cover_check.extend(king_moves_to_live)
-            else:  # If there are no moves to cover check
-                if not king_moves_to_live:
-                    print(board)
-                    print("Checkmate!")
-                    break
-        else:  #  If not check
-            if board.stalemate(get_opposite_color(piece.color)):
-                print("Stalemate!")
-                break
-        # Change the current player's color
-        current_player = Color.BLACK if current_player == Color.WHITE else Color.WHITE
-
-
 def main_gui():
+    # Initialize the board
     board: Board = Board()
     current_player: Color = Color.WHITE
     is_choosing_target: bool = False
     can_move_piece: bool = False
+    check: bool = False
+    is_mate: bool = False
+    is_checkmate: bool = False
     piece_moves: list[str] = []
+
+    # Initialize the GUI
     running = True
     while running:
         for event in pygame.event.get():
@@ -263,30 +264,38 @@ def main_gui():
                         else:
                             piece.is_clicked = False
         if can_move_piece:
+            king_pos: str = board.get_king_pos(get_opposite_color(piece.color))
+            king: King = board.get_piece(king_pos)
             # If check
             if move_piece_on_board(board, piece, piece.pos, target):
+                king.in_check = True
+                check = True
                 moves_to_cover_check: list = board.move_to_not_mate(
                     get_opposite_color(piece.color)
                 )
-                king_moves_to_live: list = board.get_valid_moves(
-                    board.get_king_pos(get_opposite_color(piece.color))
-                )
+                king_moves_to_live: list = board.get_valid_moves(king_pos)
                 # If there are moves to cover check
                 if moves_to_cover_check:
                     # Extend with the king's moves
                     moves_to_cover_check.extend(king_moves_to_live)
                 else:  # If there are no moves to cover check
                     if not king_moves_to_live:
-                        print("Checkmate!")
-                        running = False
+                        is_mate = True
+                        is_checkmate = True
             else:  #  If not check
+                king.in_check = False
+                check = False
                 if board.stalemate(get_opposite_color(piece.color)):
                     print("Stalemate!")
-                    running = False
+                    is_mate = True
             can_move_piece = False
             piece.is_clicked = False
 
-        draw_screen(board, piece_moves, draw_moves=is_choosing_target)
+        draw_screen(board, current_player, piece_moves, is_choosing_target, check)
+        if is_mate:
+            draw_winner(current_player, is_checkmate)
+            time.sleep(5)
+            running = False
     pygame.quit()
 
 
