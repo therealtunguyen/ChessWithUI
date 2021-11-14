@@ -94,29 +94,6 @@ def draw_promote_options() -> None:
     pygame.display.update()
 
 
-def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
-    """Validating the chosen square"""
-    chosen_square: str = input("Choose a square to move: ")
-    piece: Union[Piece, None] = board.get_piece(chosen_square)
-
-    # Make a while loop until the piece is valid
-    while True:
-        if piece is None:
-            print("No piece on that square")
-        elif piece.color != current_player:
-            print("That piece is not yours")
-        else:
-            piece_moves: list[str] = board.get_valid_moves(chosen_square)
-            actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
-            if len(actual_piece_moves) == 0:
-                print("That piece cannot move because you will be in check!")
-            else:
-                break
-        chosen_square = input("Choose a square to move: ")
-        piece = board.get_piece(chosen_square)
-    return (piece, chosen_square, actual_piece_moves)
-
-
 def validate_chosen_piece(current_player: Color, board: Board, index: tuple[int]) -> bool:
     """Validating the chosen square"""
     piece: Union[Piece, None] = board.squares[index[0]][index[1]]
@@ -138,20 +115,6 @@ def get_piece_moves(board: Board, piece: Piece) -> list[str]:
     piece_moves: list[str] = board.get_valid_moves(piece.pos)
     actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
     return actual_piece_moves
-
-
-def validate_target(board: Board, piece: Piece, piece_moves: list[str]) -> str:
-    """Validating the target square"""
-    target_square: str = input("Choose a square to move to: ")
-    while True:
-        if board.get_checked_when_move(piece, target_square):
-            print("That move will put you in check!")
-        elif target_square not in piece_moves:
-            print("That move is not valid")
-        else:
-            break
-        target_square = input("Choose a square to move to: ")
-    return target_square
 
 
 def validate_target_piece(
@@ -217,20 +180,7 @@ def move_piece_on_board(
     return False
 
 
-def able_to_move_on_board(chosen_square: str, target_square: str, board: Board) -> bool:
-    """
-    - Moving the piece
-    - Return True if moving the piece is successful
-    """
-    # Note that updating the board does not affect the pos attribute of the piece
-    valid_moves: list[str] = board.get_valid_moves(chosen_square)
-    if target_square in valid_moves:
-        return True
-    else:
-        return False
-
-
-def main_gui():
+def main():
     # Initialize the board
     board: Board = Board()
     current_player: Color = Color.WHITE
@@ -295,7 +245,6 @@ def main_gui():
                 king.in_check = False
                 check = False
                 if board.stalemate(get_opposite_color(piece.color)):
-                    print("Stalemate!")
                     is_mate = True
             can_move_piece = False
             piece.is_clicked = False
@@ -309,4 +258,4 @@ def main_gui():
 
 
 if __name__ == "__main__":
-    main_gui()
+    main()
