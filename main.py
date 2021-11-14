@@ -16,6 +16,7 @@ pygame.display.set_caption("Chess")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 DARK_BROWN = (166, 119, 91)
+LIGHT_GRAY = (173, 170, 166)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 
@@ -25,6 +26,7 @@ WINNER_FONT = pygame.font.SysFont("comicsans", 70)
 CHECK_TEXT = FONT.render("Check!", True, RED)
 CHECKMATE_TEXT = MATE_FONT.render("Checkmate!", True, RED)
 STALEMATE_TEXT = MATE_FONT.render("Stalemate!", True, RED)
+PROMOTION_TEXT = FONT.render("Promote your pawn", True, BLACK)
 
 
 def draw_screen(
@@ -59,8 +61,8 @@ def draw_winner(current_player: Color, is_checkmate: bool) -> None:
         SCREEN.blit(CHECKMATE_TEXT, (100, 200))
     else:
         SCREEN.blit(STALEMATE_TEXT, (100, 200))
-    color_text = "White" if current_player == Color.WHITE else "Black"
-    winner_text = WINNER_FONT.render(f"{color_text} player wins!!!", True, BLACK)
+    winner_color = "Black" if current_player == Color.WHITE else "White"
+    winner_text = WINNER_FONT.render(f"{winner_color} player wins!!!", True, BLACK)
     SCREEN.blit(winner_text, (90, 300))
     pygame.display.update()
 
@@ -79,6 +81,17 @@ def draw_current_player(current_player: Color) -> None:
     current_player_text = FONT.render(player, True, color_of_player)
     SCREEN.blit(current_text, (630, 460))
     SCREEN.blit(current_player_text, (670, 490))
+
+
+def draw_promote_options() -> None:
+    """Draw the options for the promotion"""
+    pygame.draw.rect(SCREEN, LIGHT_GRAY, (600, 0, 200, 150))
+    SCREEN.blit(PROMOTION_TEXT, (610, 20))
+    SCREEN.blit(ci.WHITE_QUEEN, (630, 50))
+    SCREEN.blit(ci.WHITE_ROOK, (720, 50))
+    SCREEN.blit(ci.WHITE_KNIGHT, (630, 100))
+    SCREEN.blit(ci.WHITE_BISHOP, (720, 100))
+    pygame.display.update()
 
 
 def validate_piece(current_player: Color, board: Board) -> tuple[Piece, str, list[str]]:
@@ -156,18 +169,23 @@ def validate_target_piece(
 
 
 def promotion() -> Union[type, None]:
-    print("Choose a number corresponding to a piece that you would like to promote!")
-    print("1. Queen   2. Rook   3. Bishop   4. Knight")
-    choice: int = int(input("Choice: "))
-    if choice == 1:
-        return Queen
-    elif choice == 2:
-        return Rook
-    elif choice == 3:
-        return Bishop
-    elif choice == 4:
-        return Knight
-    return None
+    draw_promote_options()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if 630 <= pos[0] <= 690:
+                    if 50 <= pos[1] <= 100:
+                        return Queen
+                    elif 100 <= pos[1] <= 150:
+                        return Knight
+                elif 720 <= pos[0] <= 780:
+                    if 50 <= pos[1] <= 100:
+                        return Rook
+                    elif 100 <= pos[1] <= 150:
+                        return Bishop
 
 
 def move_piece_on_board(
@@ -210,15 +228,6 @@ def able_to_move_on_board(chosen_square: str, target_square: str, board: Board) 
         return True
     else:
         return False
-
-
-def validate_player_input(current_player: Color, board: Board) -> tuple[Piece, str]:
-    """Get the valid input from player"""
-    piece: Piece
-    chosen_square: str
-    piece, chosen_square, valid_moves = validate_piece(current_player, board)
-    target_square: str = validate_target(board, piece, valid_moves)
-    return (piece, chosen_square, target_square)
 
 
 def main_gui():
