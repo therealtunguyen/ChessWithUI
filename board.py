@@ -91,7 +91,7 @@ class Board:
                     if en_passant_square is not None and isinstance(
                         en_passant_square, Pawn
                     ):
-                        if en_passant_square.jump:
+                        if en_passant_square.jump and en_passant_square.color != color:
                             return en_passant
                 return False
             else:
@@ -104,7 +104,7 @@ class Board:
                     if en_passant_square is not None and isinstance(
                         en_passant_square, Pawn
                     ):
-                        if en_passant_square.jump:
+                        if en_passant_square.jump and en_passant_square.color != color:
                             return en_passant
                 return False
         if not is_active:
@@ -186,7 +186,10 @@ class Board:
                 if is_active and is_king:
                     king: King = self.get_piece(original_pos)
                     if king.castle(target):
-                        if self.get_piece("b" + king.pos[1]) is not None:
+                        if (
+                            self.get_piece("b" + king.pos[1]) is not None
+                            and target == "c" + king.pos[1]
+                        ):
                             break
                     if target in self.get_all_valid_moves(
                         get_opposite_color(self.get_piece(original_pos).color),
