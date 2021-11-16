@@ -35,25 +35,47 @@ def draw_screen(
     piece_moves: list[str],
     draw_moves: bool,
     check: bool,
+    is_flipped: bool,
+    auto_flip: bool,
 ) -> None:
     SCREEN.fill(WHITE)
     SCREEN.blit(ci.CHESS_BOARD, (0, 0))
 
-    pygame.draw.rect(SCREEN, DARK_BROWN, (600, 450, 200, 150))
+    pygame.draw.rect(SCREEN, DARK_BROWN, (600, 380, 200, 220))
     draw_current_player(current_player)
     SCREEN.blit(CHECK_TEXT, (665, 520)) if check else None
 
+    draw_pieces(board, is_flipped)
+    if draw_moves:
+        draw_available_moves(piece_moves, is_flipped)
+
+    draw_options(auto_flip)
+    pygame.display.update()
+
+
+def draw_pieces(board: Board, is_flipped: bool) -> None:
+    """Draw the pieces on the board"""
     squares = board.squares
     for row in range(len(squares)):
         for col in range(len(squares[row])):
             piece: Union[Piece, None] = squares[row][col]
             if piece is not None:
+                r, c = get_actual_row_col(row, col, is_flipped)
                 if piece.is_clicked:
-                    pygame.draw.rect(SCREEN, YELLOW, (col * 75, row * 75, 75, 75))
-                SCREEN.blit(piece.img, (col * 75, row * 75))
-    if draw_moves:
-        draw_available_moves(piece_moves)
-    pygame.display.update()
+                    pygame.draw.rect(SCREEN, YELLOW, (c * 75, r * 75, 75, 75))
+                SCREEN.blit(piece.img, (c * 75, r * 75))
+
+
+def draw_options(auto_flip: bool) -> None:
+    auto_flip_text = FONT.render("Auto Flip", True, BLACK)
+    flip_text = FONT.render("Flip", True, BLACK)
+    SCREEN.blit(auto_flip_text, (610, 386))
+    SCREEN.blit(flip_text, (610, 420))
+    if auto_flip:
+        SCREEN.blit(ci.ON_BUTTON, (760, 380))
+    else:
+        SCREEN.blit(ci.OFF_BUTTON, (760, 380))
+    SCREEN.blit(ci.FLIP_ICON, (760, 415))
 
 
 def draw_winner(current_player: Color, is_checkmate: bool) -> None:
@@ -67,15 +89,16 @@ def draw_winner(current_player: Color, is_checkmate: bool) -> None:
     pygame.display.update()
 
 
-def draw_available_moves(piece_moves: list[str]) -> None:
+def draw_available_moves(piece_moves: list[str], is_flipped: bool) -> None:
     """Draw the available moves on the board"""
     for move in piece_moves:
         row, col = get_row_col(move)
+        row, col = get_actual_row_col(row, col, is_flipped)
         pygame.draw.circle(SCREEN, DARK_BROWN, (col * 75 + 37, row * 75 + 37), 10)
 
 
 def draw_current_player(current_player: Color) -> None:
-    current_text = FONT.render("Current Player", True, WHITE)
+    current_text = FONT.render("Current Player", True, BLACK)
     player: str = "White" if current_player == Color.WHITE else "Black"
     color_of_player = WHITE if current_player == Color.WHITE else BLACK
     current_player_text = FONT.render(player, True, color_of_player)
@@ -92,6 +115,13 @@ def draw_promote_options() -> None:
     SCREEN.blit(ci.WHITE_KNIGHT, (630, 100))
     SCREEN.blit(ci.WHITE_BISHOP, (720, 100))
     pygame.display.update()
+
+
+def get_actual_row_col(row: int, col: int, is_flipped: bool) -> tuple[int]:
+    """Get the actual row and column"""
+    if is_flipped:
+        return 7 - row, 7 - col
+    return row, col
 
 
 def validate_chosen_piece(current_player: Color, board: Board, index: tuple[int]) -> bool:
@@ -181,8 +211,9 @@ def move_piece_on_board(
 
 
 def main():
-    # Initialize the board
+    # Initialize variables
     board: Board = Board()
+    auto_flip: bool = True
     current_player: Color = Color.WHITE
     is_choosing_target: bool = False
     can_move_piece: bool = False
@@ -194,13 +225,20 @@ def main():
     # Initialize the GUI
     running = True
     while running:
+        if auto_flip:
+            is_flipped: bool = current_player == Color.BLACK
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 row, col = pygame.mouse.get_pos()
+                if 760 <= row <= 790 and 385 <= col <= 405:
+                    auto_flip = not auto_flip
+                if 760 <= row <= 790 and 420 <= col <= 440 and not auto_flip:
+                    is_flipped = not is_flipped
                 row = row // 75
                 col = col // 75
+                row, col = get_actual_row_col(row, col, is_flipped)
                 if row < 8 and col < 8:
                     if not is_choosing_target:
                         if validate_chosen_piece(current_player, board, (col, row)):
@@ -249,7 +287,15 @@ def main():
             can_move_piece = False
             piece.is_clicked = False
 
-        draw_screen(board, current_player, piece_moves, is_choosing_target, check)
+        draw_screen(
+            board,
+            current_player,
+            piece_moves,
+            is_choosing_target,
+            check,
+            is_flipped,
+            auto_flip,
+        )
         if is_mate:
             draw_winner(current_player, is_checkmate)
             time.sleep(5)

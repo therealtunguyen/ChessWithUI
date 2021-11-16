@@ -20,3 +20,10 @@ BLACK_KNIGHT: Surface = pygame.image.load(os.path.join("images", "black-knight.p
 BLACK_BISHOP: Surface = pygame.image.load(os.path.join("images", "black-bishop.png"))
 BLACK_QUEEN: Surface = pygame.image.load(os.path.join("images", "black-queen.png"))
 BLACK_KING: Surface = pygame.image.load(os.path.join("images", "black-king.png"))
+
+# Icons
+FLIP_ICON: Surface = pygame.transform.scale(
+    pygame.image.load(os.path.join("images", "flip-board.png")), (28, 28)
+)
+ON_BUTTON: Surface = pygame.image.load(os.path.join("images", "on-button.png"))
+OFF_BUTTON: Surface = pygame.image.load(os.path.join("images", "off-button.png"))
