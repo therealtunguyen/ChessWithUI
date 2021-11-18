@@ -50,6 +50,7 @@ def draw_screen(
         draw_available_moves(piece_moves, is_flipped)
 
     draw_options(auto_flip)
+    SCREEN.blit(ci.RESET_BUTTON, (760, 560))
     pygame.display.update()
 
 
@@ -213,7 +214,8 @@ def move_piece_on_board(
 def main():
     # Initialize variables
     board: Board = Board()
-    auto_flip: bool = True
+    auto_flip: bool = False
+    is_flipped: bool = False
     current_player: Color = Color.WHITE
     is_choosing_target: bool = False
     can_move_piece: bool = False
@@ -234,12 +236,16 @@ def main():
                 row, col = pygame.mouse.get_pos()
                 if 760 <= row <= 790 and 385 <= col <= 405:
                     auto_flip = not auto_flip
-                if 760 <= row <= 790 and 420 <= col <= 440 and not auto_flip:
+                if 760 <= row <= 790 and 420 <= col <= 440:
+                    auto_flip = False
                     is_flipped = not is_flipped
+                if 760 <= row and 560 <= col:
+                    board = Board()
+                    current_player = Color.WHITE
                 row = row // 75
                 col = col // 75
                 row, col = get_actual_row_col(row, col, is_flipped)
-                if row < 8 and col < 8:
+                if 0 <= row < 8 and 0 <= col < 8:
                     if not is_choosing_target:
                         if validate_chosen_piece(current_player, board, (col, row)):
                             piece: Piece = board.squares[col][row]

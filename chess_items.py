@@ -27,3 +27,4 @@ FLIP_ICON: Surface = pygame.transform.scale(
 )
 ON_BUTTON: Surface = pygame.image.load(os.path.join("images", "on-button.png"))
 OFF_BUTTON: Surface = pygame.image.load(os.path.join("images", "off-button.png"))
+RESET_BUTTON: Surface = pygame.image.load(os.path.join("images", "reset.png"))
