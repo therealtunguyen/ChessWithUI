@@ -6,6 +6,7 @@ import pygame
 import chess_items as ci
 
 pygame.font.init()
+pygame.mixer.init()
 
 # Screen
 WIDTH, HEIGHT = 800, 600
@@ -204,6 +205,7 @@ def move(board: Board, piece: Piece, chosen_square: str, target_square: str) -> 
         board.squares[promote_piece_row][promote_piece_col] = promote_type(
             target_square, piece.color
         )
+    ci.MOVE_SOUND.play()
 
 
 def in_check(board: Board, target_square: str) -> bool:
