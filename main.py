@@ -208,11 +208,6 @@ def move(board: Board, piece: Piece, chosen_square: str, target_square: str) -> 
     ci.MOVE_SOUND.play()
 
 
-def in_check(board: Board, target_square: str) -> bool:
-    """Check if the king is checked"""
-    return board.can_check(board.get_piece(target_square))
-
-
 def main():
     # Initialize variables
     board: Board = Board()
@@ -273,7 +268,7 @@ def main():
             king: King = board.get_piece(king_pos)
             move(board, piece, piece.pos, target)
             # If check
-            if in_check(board, target):
+            if board.can_check(board.get_piece(target)):
                 king.in_check = True
                 check = True
                 moves_to_cover_check: list = board.move_to_avoid_mate(
