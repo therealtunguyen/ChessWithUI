@@ -61,7 +61,7 @@ def draw_pieces(board: Board, is_flipped: bool) -> None:
         for col in range(len(squares[row])):
             piece: Union[Piece, None] = squares[row][col]
             if piece is not None:
-                r, c = get_actual_row_col(row, col, is_flipped)
+                r, c = get_row_col_with_flip(row, col, is_flipped)
                 if piece.is_clicked:
                     pygame.draw.rect(SCREEN, YELLOW, (c * 75, r * 75, 75, 75))
                 SCREEN.blit(piece.img, (c * 75, r * 75))
@@ -94,7 +94,7 @@ def draw_available_moves(piece_moves: list[str], is_flipped: bool) -> None:
     """Draw the available moves on the board"""
     for move in piece_moves:
         row, col = get_row_col(move)
-        row, col = get_actual_row_col(row, col, is_flipped)
+        row, col = get_row_col_with_flip(row, col, is_flipped)
         pygame.draw.circle(SCREEN, DARK_BROWN, (col * 75 + 37, row * 75 + 37), 10)
 
 
@@ -118,7 +118,7 @@ def draw_promote_options() -> None:
     pygame.display.update()
 
 
-def get_actual_row_col(row: int, col: int, is_flipped: bool) -> tuple[int]:
+def get_row_col_with_flip(row: int, col: int, is_flipped: bool) -> tuple[int]:
     """Get the actual row and column"""
     if is_flipped:
         return 7 - row, 7 - col
@@ -135,7 +135,7 @@ def validate_chosen_piece(current_player: Color, board: Board, index: tuple[int]
         return False
     else:
         piece_moves: list[str] = board.get_valid_moves(piece.pos)
-        actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
+        actual_piece_moves: list[str] = board.moves_to_not_in_check(piece, piece_moves)
         if len(actual_piece_moves) == 0:
             return False
     return True
@@ -144,7 +144,7 @@ def validate_chosen_piece(current_player: Color, board: Board, index: tuple[int]
 def get_piece_moves(board: Board, piece: Piece) -> list[str]:
     """Get the valid moves of the piece"""
     piece_moves: list[str] = board.get_valid_moves(piece.pos)
-    actual_piece_moves: list[str] = board.process_target(piece, piece_moves)
+    actual_piece_moves: list[str] = board.moves_to_not_in_check(piece, piece_moves)
     return actual_piece_moves
 
 
@@ -182,9 +182,7 @@ def promotion() -> Union[type, None]:
                         return Bishop
 
 
-def move_piece_on_board(
-    board: Board, piece: Piece, chosen_square: str, target_square: str
-) -> bool:
+def move(board: Board, piece: Piece, chosen_square: str, target_square: str) -> None:
     """Move the piece on the board"""
     is_a_pawn: bool = isinstance(piece, Pawn)
     is_a_king: bool = isinstance(piece, King)
@@ -206,9 +204,11 @@ def move_piece_on_board(
         board.squares[promote_piece_row][promote_piece_col] = promote_type(
             target_square, piece.color
         )
-    if board.can_check(board.get_piece(target_square)):
-        return True
-    return False
+
+
+def in_check(board: Board, target_square: str) -> bool:
+    """Check if the king is checked"""
+    return board.can_check(board.get_piece(target_square))
 
 
 def main():
@@ -244,7 +244,7 @@ def main():
                     current_player = Color.WHITE
                 row = row // 75
                 col = col // 75
-                row, col = get_actual_row_col(row, col, is_flipped)
+                row, col = get_row_col_with_flip(row, col, is_flipped)
                 if 0 <= row < 8 and 0 <= col < 8:
                     if not is_choosing_target:
                         if validate_chosen_piece(current_player, board, (col, row)):
@@ -269,11 +269,12 @@ def main():
         if can_move_piece:
             king_pos: str = board.get_king_pos(get_opposite_color(piece.color))
             king: King = board.get_piece(king_pos)
+            move(board, piece, piece.pos, target)
             # If check
-            if move_piece_on_board(board, piece, piece.pos, target):
+            if in_check(board, target):
                 king.in_check = True
                 check = True
-                moves_to_cover_check: list = board.move_to_not_mate(
+                moves_to_cover_check: list = board.move_to_avoid_mate(
                     get_opposite_color(piece.color)
                 )
                 king_moves_to_live: list = board.get_valid_moves(king_pos)

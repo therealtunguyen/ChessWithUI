@@ -65,7 +65,7 @@ class Board:
             return False
         return piece.color == current_color
 
-    def en_pas(
+    def pawn_move(
         self, pos: str, target: str, color: Color, is_active: bool = True
     ) -> Union[str, bool]:
         """
@@ -114,7 +114,9 @@ class Board:
             return False
         return target
 
-    def castle(self, pos: str, target: str, color: Color, is_active: bool = True) -> bool:
+    def king_move(
+        self, pos: str, target: str, color: Color, is_active: bool = True
+    ) -> bool:
         """
         - This can only be called if the piece at pos is a king.
         - If the king castles, update the rook position and return True.
@@ -170,7 +172,7 @@ class Board:
                 if not self.get_piece(original_pos).can_move(target):
                     break
                 elif isinstance(self.get_piece(original_pos), Pawn):
-                    if self.en_pas(original_pos, target, color, is_active) is False:
+                    if self.pawn_move(original_pos, target, color, is_active) is False:
                         break
                 elif target_piece is not None:
                     if self.match_color(target, color) and is_active:
@@ -248,7 +250,7 @@ class Board:
             target: str = get_square_name(row_order, col_order)
             if piece.can_move(target):
                 if isinstance(piece, Pawn):  # Check for en passant case
-                    if self.en_pas(pos, target, piece.color, is_active) is not False:
+                    if self.pawn_move(pos, target, piece.color, is_active) is not False:
                         available_squares.extend(
                             self.keep_checking_for_squares(
                                 piece.color,
@@ -258,7 +260,7 @@ class Board:
                             )
                         )
                 elif isinstance(piece, King):  # Check for castle case
-                    if self.castle(pos, target, piece.color, is_active):
+                    if self.king_move(pos, target, piece.color, is_active):
                         available_squares.extend(
                             self.keep_checking_for_squares(
                                 piece.color,
@@ -288,7 +290,7 @@ class Board:
     ) -> None:
         """Update chess board by moving the piece to the target position."""
         if is_pawn:
-            captured_square = self.en_pas(pos, target, self.get_piece(pos).color)
+            captured_square = self.pawn_move(pos, target, self.get_piece(pos).color)
             captured_row, captured_col = get_row_col(captured_square)
             self.squares[captured_row][captured_col] = None
         if do_castle:
@@ -332,7 +334,7 @@ class Board:
                 if piece is not None and isinstance(piece, King) and piece.color == color:
                     return pos
 
-    def move_to_not_mate(self, color: Color) -> list[str]:
+    def move_to_avoid_mate(self, color: Color) -> list[str]:
         """
         - Call this function when the opponent king is in check
         - Return True if the king is mate
@@ -349,11 +351,13 @@ class Board:
                 ):
                     valid_moves = self.get_valid_moves(pos, is_active=True)
                     moves.extend(
-                        keep_wanted(valid_moves, self.move_to_cover(piece, valid_moves))
+                        keep_wanted(
+                            valid_moves, self.move_to_cover_check(piece, valid_moves)
+                        )
                     )
         return list(set(moves))
 
-    def move_to_cover(self, piece: Piece, piece_moves: list[str]) -> list[str]:
+    def move_to_cover_check(self, piece: Piece, piece_moves: list[str]) -> list[str]:
         """
         - Check if the given piece can cover the opponent king
         - Return list of moves that it can cover
@@ -433,9 +437,9 @@ class Board:
             return True
         return False
 
-    def process_target(self, piece: Piece, piece_moves: list[str]) -> list[str]:
+    def moves_to_not_in_check(self, piece: Piece, piece_moves: list[str]) -> list[str]:
         """
-        - Check if the given piece can move to the target
+        - Check if the given piece can move to the target and the king with the corresponding color is not in check
         - Return list of moves that it can move to
         """
         moves_can_move: list[str] = []
