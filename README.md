@@ -36,7 +36,7 @@ If you have your own text editor or IDE, you can just run the **main.py** file i
 
 ## About game play
 
-All you need to do is just moving pieces and appearantly practicing your [chess][chess-rules] skill by playing with yourself 😉.
+All you need to do is just moving pieces and apparently practicing your [chess][chess-rules] skill by playing with yourself 😉.
 
 [python-download]: https://www.python.org/downloads/
 [python-mac]: https://docs.python.org/3/using/mac.html
